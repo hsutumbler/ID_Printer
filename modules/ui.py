@@ -122,15 +122,23 @@ class MedicalCardApp:
                                   font=(self.default_font, 10), foreground="gray")
         subtitle_label.pack()
         
-        # 狀態訊息區
+        # 狀態訊息區 - 使用固定高度避免推移佈局
         status_frame = ttk.LabelFrame(main_tab, text="系統狀態", padding=10)
         status_frame.pack(pady=5, padx=20, fill='x')
         
+        # 創建一個固定高度的框架來容納狀態訊息
+        status_inner_frame = ttk.Frame(status_frame, height=30)
+        status_inner_frame.pack(fill='x')
+        status_inner_frame.pack_propagate(False)  # 禁止自動調整大小
+        
         self.status_text = tk.StringVar()
         self.status_text.set("請插入健保卡並點擊讀取")
-        self.status_label = ttk.Label(status_frame, textvariable=self.status_text, 
-                                     font=(self.default_font, 10), foreground="blue")
-        self.status_label.pack()
+        
+        # 使用可捲動的文字顯示，以便顯示較長的錯誤訊息
+        self.status_label = ttk.Label(status_inner_frame, textvariable=self.status_text, 
+                                     font=(self.default_font, 10), foreground="blue",
+                                     wraplength=500)  # 設置文字換行寬度
+        self.status_label.pack(anchor='w')
         
         # 病人資料顯示區
         patient_frame = ttk.LabelFrame(main_tab, text="病人基本資料", padding=15)
@@ -407,10 +415,20 @@ class MedicalCardApp:
     def _on_read_error(self, error):
         """讀卡失敗回調"""
         error_msg = str(error)
-        self.status_text.set(f"讀取失敗: {error_msg}")
+        
+        # 截短錯誤訊息以避免狀態列過長
+        short_error = error_msg
+        if len(short_error) > 50:
+            short_error = short_error[:47] + "..."
+            
+        # 在狀態列顯示簡短錯誤訊息
+        self.status_text.set(f"讀取失敗: {short_error}")
+        
+        # 在對話框中顯示完整錯誤訊息
         messagebox.showerror("讀取錯誤", f"讀取健保卡失敗:\n{error_msg}")
         logger.error(f"讀取健保卡失敗: {error_msg}")
         
+        # 確保按鈕可用
         self.read_button.config(state=tk.NORMAL)
         self.print_button.config(state=tk.DISABLED)
 
@@ -464,13 +482,31 @@ class MedicalCardApp:
 
         except PrintManagerError as e:
             error_msg = str(e)
-            self.status_text.set(f"列印失敗: {error_msg}")
+            
+            # 截短錯誤訊息以避免狀態列過長
+            short_error = error_msg
+            if len(short_error) > 50:
+                short_error = short_error[:47] + "..."
+                
+            # 在狀態列顯示簡短錯誤訊息
+            self.status_text.set(f"列印失敗: {short_error}")
+            
+            # 在對話框中顯示完整錯誤訊息
             messagebox.showerror("列印錯誤", f"列印標籤失敗:\n{error_msg}")
             logger.error(f"列印標籤失敗: {error_msg}")
             
         except Exception as e:
             error_msg = str(e)
-            self.status_text.set(f"列印失敗: {error_msg}")
+            
+            # 截短錯誤訊息以避免狀態列過長
+            short_error = error_msg
+            if len(short_error) > 50:
+                short_error = short_error[:47] + "..."
+                
+            # 在狀態列顯示簡短錯誤訊息
+            self.status_text.set(f"列印失敗: {short_error}")
+            
+            # 在對話框中顯示完整錯誤訊息
             messagebox.showerror("列印錯誤", f"列印標籤失敗:\n{error_msg}")
             logger.error(f"列印標籤失敗: {error_msg}")
             

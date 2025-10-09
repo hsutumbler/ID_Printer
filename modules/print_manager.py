@@ -6,6 +6,7 @@ import time
 import subprocess
 import platform
 import configparser
+import io
 from .logger import logger
 
 try:
@@ -19,6 +20,16 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
     logger.warning("ReportLab 未安裝，將使用簡單文字檔案列印")
 
+# 嘗試匯入條碼生成套件
+try:
+    import barcode
+    from barcode.writer import ImageWriter
+    from PIL import Image
+    BARCODE_AVAILABLE = True
+except ImportError:
+    BARCODE_AVAILABLE = False
+    logger.warning("python-barcode 未安裝，將使用文字模擬條碼")
+
 class PrintManagerError(Exception):
     """列印管理錯誤"""
     pass
@@ -28,6 +39,10 @@ class PrintManager:
         # 讀取配置檔案
         self.config = configparser.ConfigParser()
         self.config.read('config.ini', encoding='utf-8')
+        
+        # 條碼設定
+        self.use_barcode = self.config.getboolean('標籤設定', 'use_barcode', fallback=True)
+        self.barcode_type = self.config.get('標籤設定', 'barcode_type', fallback='code128')
         
         # 從配置檔案獲取標籤尺寸
         label_width_mm = float(self.config.get('標籤設定', 'label_width', fallback='50'))
@@ -79,6 +94,33 @@ class PrintManager:
         except Exception as e:
             logger.warning(f"註冊中文字體失敗: {e}")
 
+    def generate_barcode(self, patient_id):
+        """生成條碼圖片"""
+        if not BARCODE_AVAILABLE or not self.use_barcode:
+            return None
+            
+        try:
+            # 移除非數字和字母的字符
+            clean_id = ''.join(c for c in patient_id if c.isalnum())
+            
+            # 創建條碼
+            barcode_class = barcode.get_barcode_class(self.barcode_type)
+            barcode_instance = barcode_class(clean_id, writer=ImageWriter())
+            
+            # 生成條碼圖片到內存
+            buffer = io.BytesIO()
+            barcode_instance.write(buffer)
+            
+            # 將緩衝區轉換為圖片對象
+            buffer.seek(0)
+            barcode_image = Image.open(buffer)
+            
+            return barcode_image
+        
+        except Exception as e:
+            logger.warning(f"生成條碼失敗: {e}")
+            return None
+
     def _generate_label_pdf(self, patient_data, filename):
         """生成標籤 PDF (5cm x 3.5cm)"""
         if not REPORTLAB_AVAILABLE:
@@ -102,27 +144,57 @@ class PrintManager:
             else:
                 c.setFont('Helvetica', font_size)
 
-            # 標籤內容 - 緊湊排版
+            # 標籤內容 - 按照要求的排版
             y_pos = start_y
             
-            # 身分證字號 (最重要，字體稍大)
-            c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size + 1)
-            c.drawString(start_x, y_pos, f"ID: {patient_data.get('id', 'N/A')}")
-            y_pos -= line_height + 1 * mm
+            # 生成條碼
+            patient_id = patient_data.get('id', 'N/A')
+            if self.use_barcode and BARCODE_AVAILABLE:
+                barcode_image = self.generate_barcode(patient_id)
+                
+                if barcode_image:
+                    # 儲存條碼圖片到臨時檔案
+                    temp_barcode = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+                    barcode_image.save(temp_barcode.name)
+                    temp_barcode.close()
+                    
+                    # 計算條碼尺寸和位置
+                    barcode_width = self.label_width - 4 * mm  # 留出左右邊距
+                    barcode_height = 10 * mm  # 條碼高度
+                    
+                    # 在 PDF 中插入條碼圖片
+                    c.drawImage(temp_barcode.name, start_x, y_pos - barcode_height, width=barcode_width, height=barcode_height)
+                    
+                    # 刪除臨時檔案
+                    try:
+                        os.remove(temp_barcode.name)
+                    except:
+                        pass
+                    
+                    # 移動到條碼下方（加寬與 ID 之間的間距 0.5mm）
+                    y_pos -= barcode_height + 2.5 * mm
             
-            # 姓名 (重要，字體稍大)
-            c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size + 1)
-            c.drawString(start_x, y_pos, f"姓名: {patient_data.get('name', 'N/A')}")
-            y_pos -= line_height + 1 * mm
+            # 設定統一的行距
+            uniform_spacing = line_height + 0.5 * mm
+            
+            # 身分證字號
+            c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
+            c.drawString(start_x, y_pos, f"ID：{patient_data.get('id', 'N/A')}")
+            y_pos -= uniform_spacing
+            
+            # 姓名
+            c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
+            c.drawString(start_x, y_pos, f"姓名：{patient_data.get('name', 'N/A')}")
+            y_pos -= uniform_spacing
             
             # 出生年月日
             c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
-            c.drawString(start_x, y_pos, f"生日: {patient_data.get('dob', 'N/A')}")
-            y_pos -= line_height
+            c.drawString(start_x, y_pos, f"生日：{patient_data.get('dob', 'N/A')}")
+            y_pos -= uniform_spacing
             
-            # 列印時間 (較小字體)
-            c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size - 1)
-            c.drawString(start_x, y_pos, f"列印: {print_time}")
+            # 列印時間
+            c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
+            c.drawString(start_x, y_pos, f"列印時間：{print_time}")
 
             c.showPage()
             c.save()
@@ -137,15 +209,18 @@ class PrintManager:
         """生成文字標籤 (備用方案)"""
         try:
             print_time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M")
+            patient_id = patient_data.get('id', 'N/A')
+            
+            # 使用 ASCII 字符模擬條碼
+            barcode_ascii = "|||||||||||  ||||||||||||  ||||||" if self.use_barcode else ""
+            barcode_line = f"{barcode_ascii} (條碼)\n" if self.use_barcode else ""
             
             content = f"""
 ==========================================
-          健保卡資料標籤
-==========================================
-身分證字號: {patient_data.get('id', 'N/A')}
-姓名: {patient_data.get('name', 'N/A')}
-出生年月日: {patient_data.get('dob', 'N/A')}
-列印時間: {print_time}
+{barcode_line}ID：{patient_data.get('id', 'N/A')}
+姓名：{patient_data.get('name', 'N/A')}
+生日：{patient_data.get('dob', 'N/A')}
+列印時間：{print_time}
 ==========================================
 """
             

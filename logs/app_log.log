@@ -67,3 +67,117 @@
 2025-10-09 14:58:58,212 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
 2025-10-09 14:59:06,610 - MedicalCardApp - INFO - 使用者關閉程式
 2025-10-09 14:59:06,690 - MedicalCardApp - INFO - 應用程式正常結束
+2025-10-09 23:02:26,523 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 23:02:26,523 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 23:03:16,609 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 23:03:16,609 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 23:03:16,624 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmpngnwlvu0_王大明.pdf (50.0x35.0mm)
+2025-10-09 23:03:17,738 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmpfc9i9ypw_陳小華.pdf (50.0x35.0mm)
+2025-10-09 23:03:18,788 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmp88dyjpkz_林美麗.pdf (50.0x35.0mm)
+2025-10-09 23:03:19,844 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmpoj7ypd3x_張志強.pdf (50.0x35.0mm)
+2025-10-09 23:03:20,923 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmp7ymk4fn__李雅婷.pdf (50.0x35.0mm)
+2025-10-09 23:03:21,980 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmpjbiu3hjt_吳宏偉.pdf (50.0x35.0mm)
+2025-10-09 23:05:08,290 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 23:05:08,290 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 23:11:32,583 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 23:11:32,584 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 23:14:40,070 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 23:14:40,070 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 23:14:40,106 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmph1xzqhb0_final_barcode.pdf (50.0x35.0mm)
+2025-10-09 23:26:18,952 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 23:26:18,953 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 23:26:18,990 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmph5jafr8v_final_barcode.pdf (50.0x35.0mm)
+2025-10-09 23:28:00,101 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 23:28:00,101 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 23:28:00,137 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmpkq7e8h54_final_barcode.pdf (50.0x35.0mm)
+2025-10-09 23:30:54,901 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 23:30:54,901 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 23:30:54,936 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmptmmgb_4q_final_barcode.pdf (50.0x35.0mm)
+2025-10-09 23:39:47,337 - MedicalCardApp - INFO - ==================================================
+2025-10-09 23:39:47,337 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-10-09 23:39:47,337 - MedicalCardApp - INFO - ==================================================
+2025-10-09 23:39:47,337 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-10-09 23:39:47,338 - MedicalCardApp - INFO - 使用預設 DLL 路徑
+2025-10-09 23:39:47,457 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-10-09 23:39:47,457 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-10-09 23:39:47,457 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-10-09 23:39:47,459 - MedicalCardApp - WARNING - 未找到醫院已安裝的健保卡 DLL，將使用預設路徑
+2025-10-09 23:39:47,459 - MedicalCardApp - ERROR - 設定 DLL 函式簽名失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-09 23:39:47,459 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 設定 DLL 函式簽名失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-09 23:39:47,459 - MedicalCardApp - WARNING - 無法載入健保卡 DLL，將使用模擬模式: 無法載入健保卡 DLL: 設定 DLL 函式簽名失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-09 23:39:47,459 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (模擬模式)
+2025-10-09 23:39:47,459 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-10-09 23:39:47,523 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 23:39:47,523 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 23:39:47,523 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: D:\Project\IC_Printer\ID_Printer\records
+2025-10-09 23:39:47,523 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-10-09 23:39:47,621 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 23:39:47,651 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 23:39:47,857 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 23:39:47,857 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-10-09 23:40:04,578 - MedicalCardApp - INFO - 使用者點擊讀取健保卡按鈕
+2025-10-09 23:40:04,579 - MedicalCardApp - INFO - 開始讀取健保卡...
+2025-10-09 23:40:05,585 - MedicalCardApp - WARNING - 未找到醫院已安裝的健保卡 DLL
+2025-10-09 23:40:05,585 - MedicalCardApp - WARNING - 找不到健保署讀卡機控制軟體: C:\NHI\BIN\csfsim.exe
+2025-10-09 23:40:05,585 - MedicalCardApp - ERROR - 讀取健保卡失敗: 健保卡讀取失敗：未找到醫院已安裝的健保卡系統。
+
+請聯繫醫院 IT 部門確認：
+1. 已安裝中央健康保險署讀卡機控制軟體
+2. 健保署讀卡機控制軟體 (csfsim.exe) 位於正確路徑
+3. DLL 檔案 (csHis50.dll) 位於正確路徑
+4. 讀卡機驅動程式已正確安裝
+5. 系統權限設定正確
+
+常見安裝路徑：
+- DLL: C:\NHI\LIB\csHis50.dll
+- 控制軟體: C:\NHI\BIN\csfsim.exe
+
+如需協助，請聯繫系統管理員。
+2025-10-09 23:40:08,108 - MedicalCardApp - ERROR - 讀取健保卡失敗: 健保卡讀取失敗：未找到醫院已安裝的健保卡系統。
+
+請聯繫醫院 IT 部門確認：
+1. 已安裝中央健康保險署讀卡機控制軟體
+2. 健保署讀卡機控制軟體 (csfsim.exe) 位於正確路徑
+3. DLL 檔案 (csHis50.dll) 位於正確路徑
+4. 讀卡機驅動程式已正確安裝
+5. 系統權限設定正確
+
+常見安裝路徑：
+- DLL: C:\NHI\LIB\csHis50.dll
+- 控制軟體: C:\NHI\BIN\csfsim.exe
+
+如需協助，請聯繫系統管理員。
+2025-10-09 23:40:13,140 - MedicalCardApp - INFO - 使用者點擊讀取健保卡按鈕
+2025-10-09 23:40:13,141 - MedicalCardApp - INFO - 開始讀取健保卡...
+2025-10-09 23:40:14,151 - MedicalCardApp - WARNING - 未找到醫院已安裝的健保卡 DLL
+2025-10-09 23:40:14,151 - MedicalCardApp - WARNING - 找不到健保署讀卡機控制軟體: C:\NHI\BIN\csfsim.exe
+2025-10-09 23:40:14,151 - MedicalCardApp - ERROR - 讀取健保卡失敗: 健保卡讀取失敗：未找到醫院已安裝的健保卡系統。
+
+請聯繫醫院 IT 部門確認：
+1. 已安裝中央健康保險署讀卡機控制軟體
+2. 健保署讀卡機控制軟體 (csfsim.exe) 位於正確路徑
+3. DLL 檔案 (csHis50.dll) 位於正確路徑
+4. 讀卡機驅動程式已正確安裝
+5. 系統權限設定正確
+
+常見安裝路徑：
+- DLL: C:\NHI\LIB\csHis50.dll
+- 控制軟體: C:\NHI\BIN\csfsim.exe
+
+如需協助，請聯繫系統管理員。
+2025-10-09 23:40:17,811 - MedicalCardApp - ERROR - 讀取健保卡失敗: 健保卡讀取失敗：未找到醫院已安裝的健保卡系統。
+
+請聯繫醫院 IT 部門確認：
+1. 已安裝中央健康保險署讀卡機控制軟體
+2. 健保署讀卡機控制軟體 (csfsim.exe) 位於正確路徑
+3. DLL 檔案 (csHis50.dll) 位於正確路徑
+4. 讀卡機驅動程式已正確安裝
+5. 系統權限設定正確
+
+常見安裝路徑：
+- DLL: C:\NHI\LIB\csHis50.dll
+- 控制軟體: C:\NHI\BIN\csfsim.exe
+
+如需協助，請聯繫系統管理員。
+2025-10-09 23:40:21,502 - MedicalCardApp - INFO - 使用者關閉程式
+2025-10-09 23:40:21,520 - MedicalCardApp - INFO - 應用程式正常結束
