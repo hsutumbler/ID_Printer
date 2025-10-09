@@ -1,0 +1,69 @@
+2025-10-09 14:49:37,394 - MedicalCardApp - INFO - ==================================================
+2025-10-09 14:49:37,395 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-10-09 14:49:37,395 - MedicalCardApp - INFO - ==================================================
+2025-10-09 14:49:37,396 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-10-09 14:49:37,397 - MedicalCardApp - INFO - 使用預設 DLL 路徑
+2025-10-09 14:49:37,563 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-10-09 14:49:37,563 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-10-09 14:49:37,564 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-10-09 14:49:37,572 - MedicalCardApp - ERROR - 設定 DLL 函式簽名失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-09 14:49:37,572 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 設定 DLL 函式簽名失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-09 14:49:37,573 - MedicalCardApp - WARNING - 無法載入健保卡 DLL，將使用模擬模式: 無法載入健保卡 DLL: 設定 DLL 函式簽名失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-09 14:49:37,573 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (模擬模式)
+2025-10-09 14:49:37,574 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-10-09 14:49:37,919 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 14:49:37,921 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 14:49:37,922 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: d:\Project\EmrPrinter\records
+2025-10-09 14:49:37,923 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-10-09 14:49:38,044 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 14:49:38,048 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 14:49:38,073 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 14:49:38,074 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-10-09 14:49:48,309 - MedicalCardApp - INFO - 使用者關閉程式
+2025-10-09 14:49:48,366 - MedicalCardApp - INFO - 應用程式正常結束
+2025-10-09 14:52:07,233 - MedicalCardApp - INFO - ==================================================
+2025-10-09 14:52:07,234 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-10-09 14:52:07,234 - MedicalCardApp - INFO - ==================================================
+2025-10-09 14:52:07,234 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-10-09 14:52:07,236 - MedicalCardApp - INFO - 使用預設 DLL 路徑
+2025-10-09 14:52:07,422 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-10-09 14:52:07,423 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-10-09 14:52:07,427 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-10-09 14:52:07,430 - MedicalCardApp - ERROR - 設定 DLL 函式簽名失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-09 14:52:07,431 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 設定 DLL 函式簽名失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-09 14:52:07,433 - MedicalCardApp - WARNING - 無法載入健保卡 DLL，將使用模擬模式: 無法載入健保卡 DLL: 設定 DLL 函式簽名失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-09 14:52:07,433 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (模擬模式)
+2025-10-09 14:52:07,434 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-10-09 14:52:07,621 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 14:52:07,621 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 14:52:07,623 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: d:\Project\EmrPrinter\records
+2025-10-09 14:52:07,623 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-10-09 14:52:07,678 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 14:52:07,681 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 14:52:07,697 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 14:52:07,698 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-10-09 14:52:25,379 - MedicalCardApp - INFO - 使用者關閉程式
+2025-10-09 14:52:25,442 - MedicalCardApp - INFO - 應用程式正常結束
+2025-10-09 14:58:57,883 - MedicalCardApp - INFO - ==================================================
+2025-10-09 14:58:57,883 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-10-09 14:58:57,883 - MedicalCardApp - INFO - ==================================================
+2025-10-09 14:58:57,883 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-10-09 14:58:57,884 - MedicalCardApp - INFO - 使用預設 DLL 路徑
+2025-10-09 14:58:57,966 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-10-09 14:58:57,966 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-10-09 14:58:57,966 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-10-09 14:58:57,968 - MedicalCardApp - ERROR - 設定 DLL 函式簽名失敗: Failed to load dynlib/dll 'C:\\NHI\\LIB\\csHis50.dll'. Most likely this dynlib/dll was not found when the application was frozen.
+2025-10-09 14:58:57,968 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 設定 DLL 函式簽名失敗: Failed to load dynlib/dll 'C:\\NHI\\LIB\\csHis50.dll'. Most likely this dynlib/dll was not found when the application was frozen.
+2025-10-09 14:58:57,968 - MedicalCardApp - WARNING - 無法載入健保卡 DLL，將使用模擬模式: 無法載入健保卡 DLL: 設定 DLL 函式簽名失敗: Failed to load dynlib/dll 'C:\\NHI\\LIB\\csHis50.dll'. Most likely this dynlib/dll was not found when the application was frozen.
+2025-10-09 14:58:57,968 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (模擬模式)
+2025-10-09 14:58:57,968 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-10-09 14:58:58,070 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-09 14:58:58,070 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-09 14:58:58,071 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: D:\Project\EmrPrinter\dist\健保卡標籤列印系統\_internal\records
+2025-10-09 14:58:58,071 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-10-09 14:58:58,168 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 14:58:58,179 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 14:58:58,211 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-09 14:58:58,212 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-10-09 14:59:06,610 - MedicalCardApp - INFO - 使用者關閉程式
+2025-10-09 14:59:06,690 - MedicalCardApp - INFO - 應用程式正常結束
