@@ -31,9 +31,11 @@ class MedicalCardApp:
             self.print_manager = PrintManager()
             self.record_manager = RecordManager()
             
-            # 記錄 DLL 使用狀態
+            # 記錄 DLL 使用狀態和離線模式
             self.dll_path = dll_path
             self.dll_enabled = self.card_reader.use_dll
+            self.offline_mode = self.card_reader.offline_mode
+            self.offline_auto_print = self.card_reader.offline_auto_print
             
             logger.info("所有模組初始化完成")
         except Exception as e:
@@ -132,7 +134,14 @@ class MedicalCardApp:
         status_inner_frame.pack_propagate(False)  # 禁止自動調整大小
         
         self.status_text = tk.StringVar()
-        self.status_text.set("請插入健保卡並點擊讀取")
+        # 根據離線模式設定初始狀態訊息
+        if self.offline_mode:
+            if self.dll_enabled:
+                self.status_text.set("離線模式已啟用 - 請插入健保卡並點擊讀取")
+            else:
+                self.status_text.set("離線模式 - 未找到健保卡 DLL，請檢查 GNT 程式安裝")
+        else:
+            self.status_text.set("請插入健保卡並點擊讀取")
         
         # 使用可捲動的文字顯示，以便顯示較長的錯誤訊息
         self.status_label = ttk.Label(status_inner_frame, textvariable=self.status_text, 
@@ -148,6 +157,7 @@ class MedicalCardApp:
         self.patient_id_var = tk.StringVar()
         self.patient_name_var = tk.StringVar()
         self.patient_dob_var = tk.StringVar()
+        self.patient_sex_var = tk.StringVar()
         self.read_time_var = tk.StringVar()
         
         # 身分證字號
@@ -176,6 +186,15 @@ class MedicalCardApp:
         dob_display = ttk.Label(dob_frame, textvariable=self.patient_dob_var, 
                                font=(self.default_font, 13, "bold"), foreground="navy")
         dob_display.pack(side='left', fill='x', expand=True)
+        
+        # 性別 (如果有的話)
+        sex_frame = ttk.Frame(patient_frame)
+        sex_frame.pack(fill='x', pady=2)
+        ttk.Label(sex_frame, text="性別:", width=12, anchor='w', 
+                 font=(self.default_font, 11, "bold")).pack(side='left')
+        sex_display = ttk.Label(sex_frame, textvariable=self.patient_sex_var, 
+                               font=(self.default_font, 13, "bold"), foreground="navy")
+        sex_display.pack(side='left', fill='x', expand=True)
         
         # 讀取時間
         read_time_frame = ttk.Frame(patient_frame)
@@ -384,10 +403,24 @@ class MedicalCardApp:
             self.patient_id_var.set(processed_data["id"])
             self.patient_name_var.set(processed_data["name"])
             self.patient_dob_var.set(processed_data["dob"])
+            self.patient_sex_var.set(processed_data.get("sex", ""))
             self.read_time_var.set(processed_data["read_time"])
             
-            self.status_text.set("讀取成功！請確認資料並設定列印張數")
+            # 根據離線模式設定不同的狀態訊息
+            if self.offline_mode:
+                self.status_text.set("離線模式 - 讀取成功！" + ("正在自動列印..." if self.offline_auto_print else "請確認資料並設定列印張數"))
+            else:
+                self.status_text.set("讀取成功！請確認資料並設定列印張數")
+            
             self.print_button.config(state=tk.NORMAL)
+            
+            # 離線模式自動列印
+            if self.offline_mode and self.offline_auto_print:
+                logger.info("離線模式自動列印啟用")
+                # 使用預設列印張數 (1張)
+                self.print_count_var.set("1")
+                # 延遲一秒後自動列印，讓使用者看到資料
+                self.root.after(1000, self._auto_print_offline)
             
             # 記錄讀取事件
             try:
@@ -395,7 +428,7 @@ class MedicalCardApp:
                     processed_data, 
                     processed_data["read_time"], 
                     0, 
-                    "讀取"
+                    "讀取" + (" (離線模式)" if self.offline_mode else "")
                 )
             except RecordManagerError as e:
                 logger.warning(f"記錄讀取事件失敗: {e}")
@@ -513,6 +546,56 @@ class MedicalCardApp:
         finally:
             self.print_button.config(state=tk.NORMAL)
             self.read_button.config(state=tk.NORMAL)
+    
+    def _auto_print_offline(self):
+        """離線模式自動列印功能"""
+        try:
+            if not self.current_patient_data:
+                logger.warning("離線模式自動列印失敗：無病人資料")
+                self.status_text.set("離線模式 - 自動列印失敗：無病人資料")
+                return
+            
+            logger.info("執行離線模式自動列印")
+            self.status_text.set("離線模式 - 正在列印標籤...")
+            
+            # 取得列印張數
+            print_count = int(self.print_count_var.get())
+            
+            # 執行列印
+            self.print_manager.print_labels(self.current_patient_data, print_count)
+            
+            # 記錄列印事件
+            print_time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+            try:
+                self.record_manager.log_operation(
+                    self.current_patient_data, 
+                    print_time, 
+                    print_count, 
+                    "列印 (離線自動)"
+                )
+            except RecordManagerError as e:
+                logger.warning(f"記錄列印事件失敗: {e}")
+            
+            # 更新狀態和統計
+            success_msg = f"離線模式 - 自動列印完成！已列印 {print_count} 張標籤"
+            self.status_text.set(success_msg)
+            self.update_statistics()
+            
+            logger.info(f"離線模式自動列印成功，病人: {self.current_patient_data['name']}，共 {print_count} 張")
+            
+        except PrintManagerError as e:
+            error_msg = f"離線模式自動列印失敗: {e}"
+            logger.error(error_msg)
+            self.status_text.set(error_msg)
+            # 顯示錯誤對話框
+            messagebox.showerror("自動列印失敗", error_msg)
+            
+        except Exception as e:
+            error_msg = f"離線模式自動列印時發生未知錯誤: {e}"
+            logger.error(error_msg)
+            self.status_text.set(error_msg)
+            # 顯示錯誤對話框
+            messagebox.showerror("自動列印失敗", error_msg)
 
     def clear_data(self):
         """清除病人資料"""
@@ -521,6 +604,7 @@ class MedicalCardApp:
             self.patient_id_var.set("")
             self.patient_name_var.set("")
             self.patient_dob_var.set("")
+            self.patient_sex_var.set("")
             self.read_time_var.set("")
             self.status_text.set("請插入健保卡並點擊讀取")
             self.print_button.config(state=tk.DISABLED)

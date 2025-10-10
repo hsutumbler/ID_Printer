@@ -181,3 +181,181 @@
 如需協助，請聯繫系統管理員。
 2025-10-09 23:40:21,502 - MedicalCardApp - INFO - 使用者關閉程式
 2025-10-09 23:40:21,520 - MedicalCardApp - INFO - 應用程式正常結束
+2025-10-10 22:43:32,699 - MedicalCardApp - INFO - ==================================================
+2025-10-10 22:43:32,699 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-10-10 22:43:32,700 - MedicalCardApp - INFO - ==================================================
+2025-10-10 22:43:32,700 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-10-10 22:43:32,701 - MedicalCardApp - INFO - 使用預設 DLL 路徑
+2025-10-10 22:43:33,179 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-10-10 22:43:33,179 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-10-10 22:43:33,179 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-10-10 22:43:33,179 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-10-10 22:43:33,180 - MedicalCardApp - INFO - 找到 GNT 醫院抽血櫃台程式的健保卡 DLL: D:\Project\IC_Printer\ID_Printer\GNT\HenCs\NhiCard.dll
+2025-10-10 22:43:33,180 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM1
+2025-10-10 22:43:33,181 - MedicalCardApp - ERROR - 設定 DLL 函式簽名失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
+2025-10-10 22:43:33,181 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 設定 DLL 函式簽名失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
+2025-10-10 22:43:33,181 - MedicalCardApp - WARNING - 無法載入健保卡 DLL: 無法載入健保卡 DLL: 設定 DLL 函式簽名失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
+2025-10-10 22:43:33,181 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (離線模式)
+2025-10-10 22:43:33,182 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-10-10 22:43:33,258 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-10 22:43:33,259 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-10 22:43:33,259 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: D:\Project\IC_Printer\ID_Printer\records
+2025-10-10 22:43:33,259 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-10-10 22:43:33,498 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-10 22:43:33,537 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-10 22:43:33,824 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-10 22:43:33,824 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-10-10 22:43:39,645 - MedicalCardApp - INFO - 使用者點擊讀取健保卡按鈕
+2025-10-10 22:43:39,646 - MedicalCardApp - INFO - 開始讀取健保卡...
+2025-10-10 22:43:40,661 - MedicalCardApp - WARNING - 離線模式：未找到可用的健保卡 DLL
+2025-10-10 22:43:40,661 - MedicalCardApp - ERROR - 讀取健保卡失敗: 離線模式健保卡讀取失敗。
+
+請檢查：
+1. 健保卡是否正確插入讀卡機
+2. 讀卡機是否正確連接並開啟電源
+3. GNT 程式是否已正確安裝
+4. COM 埠設定是否正確
+
+如需協助，請聯繫 IT 部門。
+2025-10-10 22:43:42,531 - MedicalCardApp - ERROR - 讀取健保卡失敗: 離線模式健保卡讀取失敗。
+
+請檢查：
+1. 健保卡是否正確插入讀卡機
+2. 讀卡機是否正確連接並開啟電源
+3. GNT 程式是否已正確安裝
+4. COM 埠設定是否正確
+
+如需協助，請聯繫 IT 部門。
+2025-10-10 22:43:46,434 - MedicalCardApp - INFO - 使用者關閉程式
+2025-10-10 22:43:46,457 - MedicalCardApp - INFO - 應用程式正常結束
+2025-10-10 22:44:16,000 - MedicalCardApp - INFO - 找到 GNT 醫院抽血櫃台程式的健保卡 DLL: D:\Project\IC_Printer\ID_Printer\GNT\HenCs\NhiCard.dll
+2025-10-10 22:44:16,001 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM1
+2025-10-10 22:44:16,001 - MedicalCardApp - ERROR - 設定 DLL 函式簽名失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
+2025-10-10 22:44:16,001 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 設定 DLL 函式簽名失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
+2025-10-10 22:45:27,037 - MedicalCardApp - INFO - 找到 GNT 醫院抽血櫃台程式的健保卡 DLL: D:\Project\IC_Printer\ID_Printer\GNT\HenCs\NhiCard.dll
+2025-10-10 22:45:27,038 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM1
+2025-10-10 22:45:27,038 - MedicalCardApp - INFO - 偵測到 GNT NhiCard.dll，這是 .NET 組件，嘗試建立 COM 物件
+2025-10-10 22:45:27,041 - MedicalCardApp - WARNING - 建立 GNT COM 物件失敗: (-2147221005, '無效的類別字串', None, None)
+2025-10-10 22:45:27,041 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: GNT NhiCard.dll 需要 COM 介面，但建立失敗: (-2147221005, '無效的類別字串', None, None)
+2025-10-10 22:45:27,041 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-10-10 22:45:27,041 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-10-10 22:45:27,042 - MedicalCardApp - INFO - 找到 GNT 醫院抽血櫃台程式的健保卡 DLL: D:\Project\IC_Printer\ID_Printer\GNT\HenCs\NhiCard.dll
+2025-10-10 22:45:27,042 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM1
+2025-10-10 22:45:27,042 - MedicalCardApp - INFO - 偵測到 GNT NhiCard.dll，這是 .NET 組件，嘗試建立 COM 物件
+2025-10-10 22:45:27,042 - MedicalCardApp - WARNING - 建立 GNT COM 物件失敗: (-2147221005, '無效的類別字串', None, None)
+2025-10-10 22:45:27,042 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: GNT NhiCard.dll 需要 COM 介面，但建立失敗: (-2147221005, '無效的類別字串', None, None)
+2025-10-10 22:45:27,043 - MedicalCardApp - WARNING - 無法載入健保卡 DLL: 無法載入健保卡 DLL: GNT NhiCard.dll 需要 COM 介面，但建立失敗: (-2147221005, '無效的類別字串', None, None)
+2025-10-10 22:45:27,043 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (離線模式)
+2025-10-10 22:45:27,043 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-10-10 22:45:27,043 - MedicalCardApp - INFO - 開始處理原始健保卡資料
+2025-10-10 22:45:27,047 - MedicalCardApp - INFO - 資料處理完成，病人: 測試病人
+2025-10-10 22:50:39,835 - MedicalCardApp - INFO - ==================================================
+2025-10-10 22:50:39,835 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-10-10 22:50:39,835 - MedicalCardApp - INFO - ==================================================
+2025-10-10 22:50:39,835 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-10-10 22:50:39,836 - MedicalCardApp - INFO - 使用預設 DLL 路徑
+2025-10-10 22:50:39,894 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-10-10 22:50:39,894 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-10-10 22:50:39,894 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-10-10 22:50:39,894 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-10-10 22:50:39,895 - MedicalCardApp - INFO - 找到外部 GNT 健保卡 DLL: D:\Project\IC_Printer\ID_Printer\GNT\HenCs\NhiCard.dll
+2025-10-10 22:50:39,895 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM1
+2025-10-10 22:50:39,895 - MedicalCardApp - INFO - 偵測到 GNT NhiCard.dll，這是 .NET 組件，嘗試建立 COM 物件
+2025-10-10 22:50:39,896 - MedicalCardApp - WARNING - 建立 GNT COM 物件失敗: (-2147221005, '無效的類別字串', None, None)
+2025-10-10 22:50:39,896 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: GNT NhiCard.dll 需要 COM 介面，但建立失敗: (-2147221005, '無效的類別字串', None, None)
+2025-10-10 22:50:39,897 - MedicalCardApp - WARNING - 無法載入健保卡 DLL: 無法載入健保卡 DLL: GNT NhiCard.dll 需要 COM 介面，但建立失敗: (-2147221005, '無效的類別字串', None, None)
+2025-10-10 22:50:39,897 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (離線模式)
+2025-10-10 22:50:39,897 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-10-10 22:50:39,961 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-10 22:50:39,961 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-10 22:50:39,961 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: D:\Project\IC_Printer\ID_Printer\records
+2025-10-10 22:50:39,961 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-10-10 22:50:40,063 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-10 22:50:40,095 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-10 22:50:40,301 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-10 22:50:40,301 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-10-10 22:51:00,234 - MedicalCardApp - INFO - 使用者點擊讀取健保卡按鈕
+2025-10-10 22:51:00,235 - MedicalCardApp - INFO - 開始讀取健保卡...
+2025-10-10 22:51:01,248 - MedicalCardApp - WARNING - 離線模式：未找到可用的健保卡 DLL
+2025-10-10 22:51:01,248 - MedicalCardApp - ERROR - 讀取健保卡失敗: 離線模式健保卡讀取失敗。
+
+請檢查：
+1. 健保卡是否正確插入讀卡機
+2. 讀卡機是否正確連接並開啟電源
+3. GNT 程式是否已正確安裝
+4. COM 埠設定是否正確
+
+如需協助，請聯繫 IT 部門。
+2025-10-10 22:51:05,231 - MedicalCardApp - ERROR - 讀取健保卡失敗: 離線模式健保卡讀取失敗。
+
+請檢查：
+1. 健保卡是否正確插入讀卡機
+2. 讀卡機是否正確連接並開啟電源
+3. GNT 程式是否已正確安裝
+4. COM 埠設定是否正確
+
+如需協助，請聯繫 IT 部門。
+2025-10-10 22:51:09,880 - MedicalCardApp - INFO - 使用者關閉程式
+2025-10-10 22:51:09,899 - MedicalCardApp - INFO - 應用程式正常結束
+2025-10-10 22:51:50,919 - MedicalCardApp - WARNING - 未找到健保卡 DLL，將使用標準健保署路徑
+2025-10-10 22:51:50,920 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM1
+2025-10-10 22:51:50,921 - MedicalCardApp - ERROR - 載入標準健保署 DLL 失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-10 22:51:50,921 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 載入標準健保署 DLL 失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-10 22:51:50,921 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-10-10 22:51:50,921 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-10-10 22:51:50,921 - MedicalCardApp - WARNING - 未找到健保卡 DLL，將使用標準健保署路徑
+2025-10-10 22:51:50,923 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM1
+2025-10-10 22:51:50,923 - MedicalCardApp - ERROR - 載入標準健保署 DLL 失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-10 22:51:50,923 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 載入標準健保署 DLL 失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-10 22:51:50,923 - MedicalCardApp - WARNING - 無法載入健保卡 DLL: 無法載入健保卡 DLL: 載入標準健保署 DLL 失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-10 22:51:50,923 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (離線模式)
+2025-10-10 22:51:50,923 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-10-10 22:51:50,923 - MedicalCardApp - INFO - 開始處理原始健保卡資料
+2025-10-10 22:51:50,926 - MedicalCardApp - INFO - 資料處理完成，病人: 測試病人
+2025-10-10 22:53:56,476 - MedicalCardApp - INFO - ==================================================
+2025-10-10 22:53:56,476 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-10-10 22:53:56,477 - MedicalCardApp - INFO - ==================================================
+2025-10-10 22:53:56,477 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-10-10 22:53:56,477 - MedicalCardApp - INFO - 使用預設 DLL 路徑
+2025-10-10 22:53:56,527 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-10-10 22:53:56,527 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-10-10 22:53:56,528 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-10-10 22:53:56,528 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-10-10 22:53:56,528 - MedicalCardApp - WARNING - 未找到健保卡 DLL，將使用標準健保署路徑
+2025-10-10 22:53:56,529 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM1
+2025-10-10 22:53:56,529 - MedicalCardApp - ERROR - 載入標準健保署 DLL 失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-10 22:53:56,529 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 載入標準健保署 DLL 失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-10 22:53:56,530 - MedicalCardApp - WARNING - 無法載入健保卡 DLL: 無法載入健保卡 DLL: 載入標準健保署 DLL 失敗: Could not find module 'C:\NHI\LIB\csHis50.dll' (or one of its dependencies). Try using the full path with constructor syntax.
+2025-10-10 22:53:56,530 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (離線模式)
+2025-10-10 22:53:56,530 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-10-10 22:53:56,604 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-10 22:53:56,604 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-10 22:53:56,604 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: d:\Project\IC_Printer\ID_Printer\records
+2025-10-10 22:53:56,604 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-10-10 22:53:56,706 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-10 22:53:56,739 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-10 22:53:56,961 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-10 22:53:56,962 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-10-10 22:54:03,542 - MedicalCardApp - INFO - 使用者點擊讀取健保卡按鈕
+2025-10-10 22:54:03,543 - MedicalCardApp - INFO - 開始讀取健保卡...
+2025-10-10 22:54:04,551 - MedicalCardApp - WARNING - 離線模式：未找到可用的健保卡 DLL
+2025-10-10 22:54:04,551 - MedicalCardApp - ERROR - 讀取健保卡失敗: 離線模式健保卡讀取失敗。
+
+請檢查：
+1. 健保卡是否正確插入讀卡機
+2. 讀卡機是否正確連接並開啟電源
+3. GNT 程式是否已正確安裝
+4. COM 埠設定是否正確
+
+如需協助，請聯繫 IT 部門。
+2025-10-10 22:54:06,663 - MedicalCardApp - ERROR - 讀取健保卡失敗: 離線模式健保卡讀取失敗。
+
+請檢查：
+1. 健保卡是否正確插入讀卡機
+2. 讀卡機是否正確連接並開啟電源
+3. GNT 程式是否已正確安裝
+4. COM 埠設定是否正確
+
+如需協助，請聯繫 IT 部門。
+2025-10-10 22:54:09,471 - MedicalCardApp - INFO - 使用者關閉程式
+2025-10-10 22:54:09,497 - MedicalCardApp - INFO - 應用程式正常結束

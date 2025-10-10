@@ -31,21 +31,50 @@ class DataProcessor:
             
             # 處理出生年月日
             raw_dob = raw_data.get("BIRTH_DATE", "").strip()
-            if raw_dob and len(raw_dob) == 8:
+            if raw_dob and len(raw_dob) >= 7:
                 try:
-                    dob_obj = datetime.datetime.strptime(raw_dob, "%Y%m%d")
-                    patient_dob = dob_obj.strftime("%Y/%m/%d")
+                    if len(raw_dob) == 8:
+                        # YYYYMMDD 格式
+                        dob_obj = datetime.datetime.strptime(raw_dob, "%Y%m%d")
+                        patient_dob = dob_obj.strftime("%Y/%m/%d")
+                    elif len(raw_dob) == 7:
+                        # 民國年 YYYMMDD 格式
+                        year = int(raw_dob[:3]) + 1911
+                        month = int(raw_dob[3:5])
+                        day = int(raw_dob[5:7])
+                        dob_obj = datetime.datetime(year, month, day)
+                        patient_dob = dob_obj.strftime("%Y/%m/%d")
+                    else:
+                        # 其他格式嘗試解析
+                        if "/" in raw_dob:
+                            patient_dob = raw_dob
+                        else:
+                            patient_dob = "格式不明"
                 except ValueError:
                     logger.warning(f"出生年月日格式錯誤: {raw_dob}")
                     patient_dob = "格式錯誤"
             else:
                 logger.warning("出生年月日資料不完整")
                 patient_dob = "資料不完整"
+            
+            # 處理性別資訊 (GNT 可能提供)
+            patient_sex = raw_data.get("SEX", "").strip()
+            if patient_sex:
+                # 標準化性別顯示
+                if patient_sex in ["1", "M", "男", "Male"]:
+                    patient_sex = "男"
+                elif patient_sex in ["2", "F", "女", "Female"]:
+                    patient_sex = "女"
+                else:
+                    patient_sex = "未知"
+            else:
+                patient_sex = ""
 
             processed_data = {
                 "id": patient_id,
                 "name": patient_name,
                 "dob": patient_dob,
+                "sex": patient_sex,
                 "read_time": datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
             }
             

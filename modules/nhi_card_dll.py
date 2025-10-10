@@ -8,7 +8,16 @@ import os
 import ctypes
 from ctypes import wintypes, c_char_p, c_int, c_bool, byref, create_string_buffer, c_char
 import datetime
+import configparser
 from .logger import logger
+
+# 嘗試匯入 COM 支援 (用於 GNT NhiCard.dll)
+try:
+    import win32com.client
+    COM_AVAILABLE = True
+except ImportError:
+    COM_AVAILABLE = False
+    logger.warning("win32com 未安裝，無法使用 GNT COM 介面")
 
 class NHICardDLLError(Exception):
     """健保卡 DLL 呼叫錯誤"""
@@ -25,8 +34,11 @@ class NHICardDLL:
             dll_path: DLL 檔案路徑，如果為 None，則使用預設路徑
         """
         self.dll = None
+        self.com_object = None
         self.dll_path = dll_path or self._get_default_dll_path()
         self.initialized = False
+        self.is_gnt_dll = False
+        self.com_port = self._get_com_port()
         
         try:
             # 載入 DLL
@@ -37,8 +49,20 @@ class NHICardDLL:
             logger.error(f"健保卡 DLL 載入失敗: {e}")
             raise NHICardDLLError(f"無法載入健保卡 DLL: {e}")
     
+    def _get_com_port(self):
+        """從配置檔案讀取 COM 埠設定"""
+        try:
+            config = configparser.ConfigParser()
+            config.read('config.ini', encoding='utf-8')
+            com_port = config.getint('健保卡設定', 'com_port', fallback=1)
+            logger.info(f"讀卡機 COM 埠設定: COM{com_port}")
+            return com_port
+        except Exception as e:
+            logger.warning(f"讀取 COM 埠設定失敗: {e}，使用預設值 COM1")
+            return 1
+    
     def _get_default_dll_path(self):
-        """取得預設的 DLL 路徑 - 優先使用醫院已安裝的 DLL"""
+        """取得預設的 DLL 路徑 - 優先使用 GNT 的 NhiCard.dll"""
         
         # 檢查配置檔案中指定的路徑（最高優先級）
         try:
@@ -52,88 +76,114 @@ class NHICardDLL:
         except Exception as e:
             logger.warning(f"讀取配置檔案 DLL 路徑失敗: {e}")
         
-        # 檢查環境變數中的路徑（第二優先級）
+        # 檢查是否有外部 GNT DLL（第二優先級）
+        # 注意：GNT 資料夾已移除，但保留檢查邏輯以防有其他位置的 GNT DLL
+        potential_gnt_paths = [
+            os.path.join(os.getcwd(), "GNT", "HenCs", "NhiCard.dll"),      # 原 GNT 路徑（已移除）
+            r"C:\GNT\HenCs\NhiCard.dll",                                   # 系統安裝的 GNT
+            r"C:\Program Files\GNT\NhiCard.dll",                           # Program Files 中的 GNT
+            r"C:\Program Files (x86)\GNT\NhiCard.dll",                     # Program Files (x86) 中的 GNT
+        ]
+        
+        for path in potential_gnt_paths:
+            if os.path.exists(path):
+                logger.info(f"找到外部 GNT 健保卡 DLL: {path}")
+                return path
+        
+        # 檢查環境變數中的路徑（第三優先級）
         nhi_path = os.environ.get("NHI_CARD_DLL_PATH")
         if nhi_path and os.path.exists(nhi_path):
             logger.info(f"使用環境變數中的 DLL 路徑: {nhi_path}")
             return nhi_path
         
-        # 醫院常見的健保卡 DLL 安裝路徑（按優先順序搜尋）
-        hospital_paths = [
+        # 健保署官方標準路徑（第四優先級）
+        standard_paths = [
             r"C:\NHI\LIB\csHis50.dll",                    # 健保署官方標準路徑
             r"C:\Program Files\NHI\LIB\csHis50.dll",      # Program Files 路徑
             r"C:\Program Files (x86)\NHI\LIB\csHis50.dll", # Program Files (x86) 路徑
-            r"C:\Program Files\NHI\csHis50.dll",          # Program Files 根目錄
-            r"C:\Program Files (x86)\NHI\csHis50.dll",    # Program Files (x86) 根目錄
-            r"C:\Windows\System32\csHis50.dll",           # System32 路徑
-            r"C:\Windows\SysWOW64\csHis50.dll",           # SysWOW64 路徑
-            r"C:\健保卡\csHis50.dll",                     # 中文路徑
-            r"C:\CardReader\csHis50.dll",                 # 英文路徑
-            r"C:\NHI\csHis50.dll",                        # NHI 根目錄
-            # 備用的舊版 DLL 名稱
-            r"C:\NHI\LIB\NHICardReader.dll",
-            r"C:\Program Files\NHI\NHICardReader.dll",
-            r"C:\Program Files (x86)\NHI\NHICardReader.dll",
-            r"C:\Windows\System32\NHICardReader.dll",
-            r"C:\Windows\SysWOW64\NHICardReader.dll",
         ]
         
         # 尋找第一個存在的路徑
-        for path in hospital_paths:
+        for path in standard_paths:
             if os.path.exists(path):
-                logger.info(f"找到醫院已安裝的健保卡 DLL: {path}")
+                logger.info(f"找到健保署官方健保卡 DLL: {path}")
                 return path
         
-        # 如果都找不到，返回標準路徑（讓錯誤訊息更清楚）
-        logger.warning("未找到醫院已安裝的健保卡 DLL，將使用預設路徑")
+        # 如果都找不到，返回標準健保署路徑（讓錯誤訊息更清楚）
+        logger.warning("未找到健保卡 DLL，將使用標準健保署路徑")
         return r"C:\NHI\LIB\csHis50.dll"
     
     def _load_dll(self):
         """載入 DLL 並設定函式簽名"""
-        try:
-            self.dll = ctypes.CDLL(self.dll_path)
-            
-            # 設定常見的健保卡 DLL 函式簽名
-            # 注意: 實際的函式名稱和參數可能需要根據實際的 DLL 文件進行調整
-            
-            # 初始化函式
-            if hasattr(self.dll, 'NHI_Initialize'):
-                self.dll.NHI_Initialize.argtypes = []
-                self.dll.NHI_Initialize.restype = c_bool
-            
-            # 讀卡函式
-            if hasattr(self.dll, 'NHI_ReadCard'):
-                self.dll.NHI_ReadCard.argtypes = []
-                self.dll.NHI_ReadCard.restype = c_bool
-            
-            # 取得身分證字號
-            if hasattr(self.dll, 'NHI_GetID'):
-                self.dll.NHI_GetID.argtypes = [c_char_p, c_int]
-                self.dll.NHI_GetID.restype = c_bool
-            
-            # 取得姓名
-            if hasattr(self.dll, 'NHI_GetName'):
-                self.dll.NHI_GetName.argtypes = [c_char_p, c_int]
-                self.dll.NHI_GetName.restype = c_bool
-            
-            # 取得出生日期
-            if hasattr(self.dll, 'NHI_GetBirthDate'):
-                self.dll.NHI_GetBirthDate.argtypes = [c_char_p, c_int]
-                self.dll.NHI_GetBirthDate.restype = c_bool
-            
-            # 取得錯誤訊息
-            if hasattr(self.dll, 'NHI_GetLastError'):
-                self.dll.NHI_GetLastError.argtypes = [c_char_p, c_int]
-                self.dll.NHI_GetLastError.restype = c_int
-            
-            # 釋放資源
-            if hasattr(self.dll, 'NHI_Release'):
-                self.dll.NHI_Release.argtypes = []
-                self.dll.NHI_Release.restype = c_bool
-            
-        except Exception as e:
-            logger.error(f"設定 DLL 函式簽名失敗: {e}")
-            raise NHICardDLLError(f"設定 DLL 函式簽名失敗: {e}")
+        # 檢查是否為 GNT 的 NhiCard.dll 或標準的 csHis50.dll
+        self.is_gnt_dll = "NhiCard.dll" in self.dll_path
+        
+        if self.is_gnt_dll:
+            logger.info("偵測到 GNT NhiCard.dll，這是 .NET 組件，嘗試建立 COM 物件")
+            # GNT NhiCard.dll 是 .NET 組件，不能用 ctypes.CDLL 載入
+            # 需要透過 COM 介面使用
+            if COM_AVAILABLE:
+                try:
+                    # 嘗試建立 GNT Patient COM 物件
+                    self.com_object = win32com.client.Dispatch("NhiCard.Patient")
+                    logger.info("成功建立 GNT Patient COM 物件")
+                    # 對於 GNT DLL，不需要載入為 ctypes.CDLL
+                    self.dll = None
+                    return
+                except Exception as e:
+                    logger.warning(f"建立 GNT COM 物件失敗: {e}")
+                    self.com_object = None
+                    # 如果 COM 失敗，拋出錯誤而不是嘗試 ctypes 載入
+                    raise NHICardDLLError(f"GNT NhiCard.dll 需要 COM 介面，但建立失敗: {e}")
+            else:
+                logger.warning("win32com 不可用，無法使用 GNT COM 介面")
+                raise NHICardDLLError("GNT NhiCard.dll 需要 win32com 套件支援")
+        else:
+            # 標準健保署 DLL 使用 ctypes 載入
+            try:
+                self.dll = ctypes.CDLL(self.dll_path)
+                logger.info("使用標準健保署 DLL 函式簽名")
+                
+                # 設定標準健保署 DLL 函式簽名
+                
+                # 初始化函式
+                if hasattr(self.dll, 'NHI_Initialize'):
+                    self.dll.NHI_Initialize.argtypes = []
+                    self.dll.NHI_Initialize.restype = c_bool
+                
+                # 讀卡函式
+                if hasattr(self.dll, 'NHI_ReadCard'):
+                    self.dll.NHI_ReadCard.argtypes = []
+                    self.dll.NHI_ReadCard.restype = c_bool
+                
+                # 取得身分證字號
+                if hasattr(self.dll, 'NHI_GetID'):
+                    self.dll.NHI_GetID.argtypes = [c_char_p, c_int]
+                    self.dll.NHI_GetID.restype = c_bool
+                
+                # 取得姓名
+                if hasattr(self.dll, 'NHI_GetName'):
+                    self.dll.NHI_GetName.argtypes = [c_char_p, c_int]
+                    self.dll.NHI_GetName.restype = c_bool
+                
+                # 取得出生日期
+                if hasattr(self.dll, 'NHI_GetBirthDate'):
+                    self.dll.NHI_GetBirthDate.argtypes = [c_char_p, c_int]
+                    self.dll.NHI_GetBirthDate.restype = c_bool
+                
+                # 取得錯誤訊息
+                if hasattr(self.dll, 'NHI_GetLastError'):
+                    self.dll.NHI_GetLastError.argtypes = [c_char_p, c_int]
+                    self.dll.NHI_GetLastError.restype = c_int
+                
+                # 釋放資源
+                if hasattr(self.dll, 'NHI_Release'):
+                    self.dll.NHI_Release.argtypes = []
+                    self.dll.NHI_Release.restype = c_bool
+                    
+            except Exception as e:
+                logger.error(f"載入標準健保署 DLL 失敗: {e}")
+                raise NHICardDLLError(f"載入標準健保署 DLL 失敗: {e}")
     
     def initialize(self):
         """初始化讀卡機"""
@@ -156,35 +206,16 @@ class NHICardDLL:
             raise NHICardDLLError("DLL 尚未載入")
         
         try:
-            # 初始化讀卡機
-            self.initialize()
-            
-            # 讀取卡片
-            if hasattr(self.dll, 'NHI_ReadCard'):
-                result = self.dll.NHI_ReadCard()
-                if not result:
-                    error = self.get_last_error()
-                    raise NHICardDLLError(f"讀取健保卡失敗: {error}")
-            
-            # 取得身分證字號
-            id_number = self._get_string_value('NHI_GetID', 20)
-            
-            # 取得姓名
-            name = self._get_string_value('NHI_GetName', 50)
-            
-            # 取得出生日期
-            birth_date = self._get_string_value('NHI_GetBirthDate', 20)
-            
-            # 整理資料
-            card_data = {
-                "ID_NUMBER": id_number,
-                "FULL_NAME": name,
-                "BIRTH_DATE": self._format_birth_date(birth_date)
-            }
-            
-            logger.info(f"成功讀取健保卡，病人: {name}")
-            return card_data
-            
+            if self.is_gnt_dll and self.com_object:
+                # 使用 GNT COM 介面讀取
+                return self._read_card_gnt_com()
+            elif self.is_gnt_dll:
+                # 使用 GNT DLL 直接呼叫 (備用方案)
+                return self._read_card_gnt_dll()
+            else:
+                # 使用標準健保署 DLL
+                return self._read_card_standard()
+                
         except NHICardDLLError as e:
             logger.error(f"讀取健保卡失敗: {e}")
             raise
@@ -194,6 +225,85 @@ class NHICardDLL:
         finally:
             # 釋放資源
             self.release()
+    
+    def _read_card_gnt_com(self):
+        """使用 GNT COM 介面讀取健保卡"""
+        logger.info("使用 GNT COM 介面讀取健保卡")
+        
+        try:
+            # 開啟讀卡機連接埠
+            if hasattr(self.com_object, 'Open'):
+                result = self.com_object.Open()
+                if not result:
+                    raise NHICardDLLError("無法開啟讀卡機連接埠")
+            
+            # 取得病患資料
+            if hasattr(self.com_object, 'GetPatientData'):
+                result = self.com_object.GetPatientData()
+                if not result:
+                    raise NHICardDLLError("讀取病患資料失敗")
+            
+            # 檢查是否有卡片
+            if hasattr(self.com_object, 'CardCheck') and not self.com_object.CardCheck:
+                raise NHICardDLLError("未偵測到健保卡，請確認卡片已正確插入")
+            
+            # 取得病患資料
+            card_data = {
+                "ID_NUMBER": getattr(self.com_object, 'GetPatientIdCard', ''),
+                "FULL_NAME": getattr(self.com_object, 'GetPatientName', ''),
+                "BIRTH_DATE": '',  # GNT COM 介面可能不提供出生日期
+                "SEX": getattr(self.com_object, 'GetPatientSex', '')
+            }
+            
+            # 檢查必要資料
+            if not card_data["ID_NUMBER"] or not card_data["FULL_NAME"]:
+                raise NHICardDLLError("讀取的健保卡資料不完整")
+            
+            logger.info(f"成功讀取健保卡 (GNT COM)，病人: {card_data['FULL_NAME']}")
+            return card_data
+            
+        except Exception as e:
+            raise NHICardDLLError(f"GNT COM 讀取失敗: {e}")
+    
+    def _read_card_gnt_dll(self):
+        """使用 GNT DLL 直接呼叫讀取健保卡 (備用方案)"""
+        logger.info("使用 GNT DLL 直接呼叫讀取健保卡")
+        # 這裡可以實作直接呼叫 GNT DLL 的方法
+        # 由於 GNT DLL 主要設計為 COM 介面，直接呼叫較複雜
+        raise NHICardDLLError("GNT DLL 直接呼叫尚未實作，請確保 win32com 可用")
+    
+    def _read_card_standard(self):
+        """使用標準健保署 DLL 讀取健保卡"""
+        logger.info("使用標準健保署 DLL 讀取健保卡")
+        
+        # 初始化讀卡機
+        self.initialize()
+        
+        # 讀取卡片
+        if hasattr(self.dll, 'NHI_ReadCard'):
+            result = self.dll.NHI_ReadCard()
+            if not result:
+                error = self.get_last_error()
+                raise NHICardDLLError(f"讀取健保卡失敗: {error}")
+        
+        # 取得身分證字號
+        id_number = self._get_string_value('NHI_GetID', 20)
+        
+        # 取得姓名
+        name = self._get_string_value('NHI_GetName', 50)
+        
+        # 取得出生日期
+        birth_date = self._get_string_value('NHI_GetBirthDate', 20)
+        
+        # 整理資料
+        card_data = {
+            "ID_NUMBER": id_number,
+            "FULL_NAME": name,
+            "BIRTH_DATE": self._format_birth_date(birth_date)
+        }
+        
+        logger.info(f"成功讀取健保卡 (標準 DLL)，病人: {name}")
+        return card_data
     
     def _get_string_value(self, function_name, buffer_size):
         """從 DLL 函式取得字串值"""

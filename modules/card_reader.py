@@ -19,16 +19,23 @@ class CardReader:
         self.is_reading = False
         self.dll_path = dll_path
         self.csfsim_path = None
+        self.offline_mode = False
+        self.offline_auto_print = False
         
         # 讀取設定檔
         try:
             config = configparser.ConfigParser()
             config.read('config.ini', encoding='utf-8')
             self.csfsim_path = config.get('健保卡設定', 'csfsim_path', fallback=r"C:\NHI\BIN\csfsim.exe")
+            self.offline_mode = config.getboolean('健保卡設定', 'offline_mode', fallback=True)
+            self.offline_auto_print = config.getboolean('健保卡設定', 'offline_auto_print', fallback=True)
             logger.info(f"健保卡讀卡機控制軟體路徑: {self.csfsim_path}")
+            logger.info(f"離線模式: {'啟用' if self.offline_mode else '停用'}")
         except Exception as e:
             logger.warning(f"讀取健保卡設定檔失敗: {e}")
             self.csfsim_path = r"C:\NHI\BIN\csfsim.exe"
+            self.offline_mode = True
+            self.offline_auto_print = True
         
         # 嘗試載入健保卡 DLL
         try:
@@ -37,12 +44,15 @@ class CardReader:
             logger.info(f"健保卡讀取模組初始化完成 (使用 DLL: {self.nhi_dll.dll_path})")
         except NHICardDLLError as e:
             self.use_dll = False
-            logger.warning(f"無法載入健保卡 DLL，將使用模擬模式: {e}")
-            logger.info("健保卡讀取模組初始化完成 (模擬模式)")
+            logger.warning(f"無法載入健保卡 DLL: {e}")
+            if self.offline_mode:
+                logger.info("健保卡讀取模組初始化完成 (離線模式)")
+            else:
+                logger.info("健保卡讀取模組初始化完成 (模擬模式)")
         except Exception as e:
             self.use_dll = False
             logger.error(f"健保卡讀取模組初始化時發生未知錯誤: {e}")
-            logger.info("健保卡讀取模組初始化完成 (模擬模式)")
+            logger.info("健保卡讀取模組初始化完成 (離線模式)" if self.offline_mode else "健保卡讀取模組初始化完成 (模擬模式)")
 
     def launch_csfsim(self):
         """啟動健保署讀卡機控制軟體"""
@@ -62,16 +72,15 @@ class CardReader:
     def _simulate_read_card(self):
         """
         讀取健保卡
-        如果成功載入 DLL，則使用 DLL 讀取
-        否則會拋出錯誤提示使用者安裝讀卡機 SDK
+        支援離線模式和 DLL 讀取
         """
         logger.info("開始讀取健保卡...")
         
         # 如果成功載入 DLL，則使用 DLL 讀取
         if self.use_dll:
             try:
-                # 使用醫院已安裝的 DLL 讀取健保卡
-                logger.info(f"使用醫院已安裝的 DLL 讀取健保卡: {self.nhi_dll.dll_path}")
+                # 使用 GNT 或標準 DLL 讀取健保卡
+                logger.info(f"使用 DLL 讀取健保卡: {self.nhi_dll.dll_path}")
                 raw_data = self.nhi_dll.read_card()
                 
                 # 檢查資料完整性
@@ -83,57 +92,71 @@ class CardReader:
                 return raw_data
                 
             except NHICardDLLError as e:
-                logger.error(f"醫院 DLL 讀取健保卡失敗: {e}")
-                # 嘗試啟動健保署讀卡機控制軟體
-                self.launch_csfsim()
-                raise CardReaderError(
-                    f"健保卡讀取失敗: {e}\n\n"
-                    f"請確認：\n"
-                    f"1. 醫院已安裝健保署讀卡機控制軟體\n"
-                    f"2. DLL 檔案路徑正確: {self.nhi_dll.dll_path}\n"
-                    f"3. 讀卡機已正確連接並開啟\n"
-                    f"4. 健保卡已正確插入讀卡機\n"
-                    f"5. 程式有足夠權限存取 DLL 檔案\n\n"
-                    f"已嘗試啟動健保署讀卡機控制軟體，請稍後再試。\n"
-                    f"如問題持續，請聯繫醫院 IT 部門。"
-                )
+                logger.error(f"DLL 讀取健保卡失敗: {e}")
+                
+                # 如果是離線模式，提供簡化的錯誤訊息
+                if self.offline_mode:
+                    raise CardReaderError(
+                        f"健保卡讀取失敗: {e}\n\n"
+                        f"離線模式故障排除：\n"
+                        f"1. 確認健保卡已正確插入讀卡機\n"
+                        f"2. 確認讀卡機已連接並開啟電源\n"
+                        f"3. 確認 COM 埠設定正確\n"
+                        f"4. 重新插拔健保卡再試\n\n"
+                        f"如問題持續，請聯繫 IT 部門。"
+                    )
+                else:
+                    # 嘗試啟動健保署讀卡機控制軟體
+                    self.launch_csfsim()
+                    raise CardReaderError(
+                        f"健保卡讀取失敗: {e}\n\n"
+                        f"請確認：\n"
+                        f"1. 健保卡已正確插入讀卡機\n"
+                        f"2. 讀卡機已正確連接並開啟\n"
+                        f"3. DLL 檔案路徑正確\n"
+                        f"4. 程式有足夠權限存取 DLL 檔案\n\n"
+                        f"已嘗試啟動健保署讀卡機控制軟體。"
+                    )
                 
             except Exception as e:
                 logger.error(f"讀取健保卡時發生未知錯誤: {e}")
                 raise CardReaderError(f"讀取健保卡時發生未知錯誤: {e}")
         
-        # 如果沒有載入 DLL，則提供詳細的安裝指引
+        # 如果沒有載入 DLL
         else:
-            time.sleep(1)  # 模擬讀卡時間
-            logger.warning("未找到醫院已安裝的健保卡 DLL")
-            
-            # 嘗試啟動健保署讀卡機控制軟體
-            if self.launch_csfsim():
+            if self.offline_mode:
+                # 離線模式：提示使用者檢查硬體
+                time.sleep(1)  # 模擬讀卡時間
+                logger.warning("離線模式：未找到可用的健保卡 DLL")
                 raise CardReaderError(
-                    "健保卡讀取失敗：未找到醫院已安裝的健保卡 DLL。\n\n"
-                    "已嘗試啟動健保署讀卡機控制軟體，請稍後再試。\n\n"
-                    "請聯繫醫院 IT 部門確認：\n"
-                    "1. 已安裝中央健康保險署讀卡機控制軟體\n"
-                    "2. DLL 檔案 (csHis50.dll) 位於正確路徑\n"
-                    "3. 讀卡機驅動程式已正確安裝\n"
-                    "4. 健保卡已正確插入讀卡機\n"
-                    "5. 系統權限設定正確\n\n"
-                    "如需協助，請聯繫系統管理員。"
+                    "離線模式健保卡讀取失敗。\n\n"
+                    "請檢查：\n"
+                    "1. 健保卡是否正確插入讀卡機\n"
+                    "2. 讀卡機是否正確連接並開啟電源\n"
+                    "3. GNT 程式是否已正確安裝\n"
+                    "4. COM 埠設定是否正確\n\n"
+                    "如需協助，請聯繫 IT 部門。"
                 )
             else:
-                raise CardReaderError(
-                    "健保卡讀取失敗：未找到醫院已安裝的健保卡系統。\n\n"
-                    "請聯繫醫院 IT 部門確認：\n"
-                    "1. 已安裝中央健康保險署讀卡機控制軟體\n"
-                    "2. 健保署讀卡機控制軟體 (csfsim.exe) 位於正確路徑\n"
-                    "3. DLL 檔案 (csHis50.dll) 位於正確路徑\n"
-                    "4. 讀卡機驅動程式已正確安裝\n"
-                    "5. 系統權限設定正確\n\n"
-                    "常見安裝路徑：\n"
-                    "- DLL: C:\\NHI\\LIB\\csHis50.dll\n"
-                    "- 控制軟體: C:\\NHI\\BIN\\csfsim.exe\n\n"
-                    "如需協助，請聯繫系統管理員。"
-                )
+                # 一般模式：提供完整安裝指引
+                time.sleep(1)  # 模擬讀卡時間
+                logger.warning("未找到健保卡 DLL")
+                
+                if self.launch_csfsim():
+                    raise CardReaderError(
+                        "健保卡讀取失敗：未找到健保卡 DLL。\n\n"
+                        "已嘗試啟動健保署讀卡機控制軟體，請稍後再試。\n\n"
+                        "請聯繫 IT 部門確認系統安裝。"
+                    )
+                else:
+                    raise CardReaderError(
+                        "健保卡讀取失敗：未找到健保卡系統。\n\n"
+                        "請聯繫 IT 部門確認：\n"
+                        "1. 健保署讀卡機控制軟體已安裝\n"
+                        "2. GNT 抽血櫃台程式已安裝\n"
+                        "3. 讀卡機驅動程式已正確安裝\n\n"
+                        "如需協助，請聯繫系統管理員。"
+                    )
 
     def _test_mode_read_card(self):
         """
