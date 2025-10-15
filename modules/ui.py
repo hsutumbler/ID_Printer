@@ -107,9 +107,9 @@ class MedicalCardApp:
         stats_tab = ttk.Frame(self.tab_control)
         self.tab_control.add(stats_tab, text="今日統計")
         
-        # 讀卡機設定頁籤
+        # 讀卡機狀態頁籤
         settings_tab = ttk.Frame(self.tab_control)
-        self.tab_control.add(settings_tab, text="讀卡機設定")
+        self.tab_control.add(settings_tab, text="系統狀態")
         
         # ===== 主畫面頁籤內容 =====
         # 主標題
@@ -139,7 +139,7 @@ class MedicalCardApp:
             if self.dll_enabled:
                 self.status_text.set("離線模式已啟用 - 請插入健保卡並點擊讀取")
             else:
-                self.status_text.set("離線模式 - 未找到健保卡 DLL，請檢查 GNT 程式安裝")
+                self.status_text.set("離線模式 - 未找到健保卡 DLL，請檢查健保署讀卡機控制軟體安裝")
         else:
             self.status_text.set("請插入健保卡並點擊讀取")
         
@@ -321,7 +321,7 @@ class MedicalCardApp:
         settings_main_frame.pack(fill='both', expand=True)
         
         # 設定標題
-        settings_title = ttk.Label(settings_main_frame, text="讀卡機設定", 
+        settings_title = ttk.Label(settings_main_frame, text="系統狀態與工具", 
                                  font=(self.default_font, 14, "bold"))
         settings_title.pack(pady=(10, 20))
         
@@ -365,19 +365,20 @@ class MedicalCardApp:
                               font=(self.default_font, 11))
         mode_label.pack(pady=15)
         
-        # 設定選項
-        options_frame = ttk.LabelFrame(settings_main_frame, text="設定選項", padding=15)
+        # 操作選項
+        options_frame = ttk.LabelFrame(settings_main_frame, text="操作選項", padding=15)
         options_frame.pack(fill='x', pady=15)
-        
-        # 設定按鈕
-        settings_button = ttk.Button(options_frame, text="設定讀卡機", 
-                                    command=self.show_card_reader_settings, width=25)
-        settings_button.pack(pady=5)
         
         # 啟動健保署讀卡機控制軟體按鈕
         launch_button = ttk.Button(options_frame, text="啟動健保署讀卡機控制軟體", 
-                                  command=self.launch_csfsim, width=25)
+                                  command=self.launch_csfsim, width=30)
         launch_button.pack(pady=5)
+        
+        # 說明文字
+        info_label = ttk.Label(options_frame, 
+                               text="如果讀卡機無法正常工作，請點擊上方按鈕啟動健保署讀卡機控制軟體",
+                               foreground="gray", wraplength=500)
+        info_label.pack(pady=5)
 
     def start_read_card(self):
         """開始讀取健保卡"""
@@ -780,14 +781,14 @@ class MedicalCardApp:
                 dll_path = self.dll_path or "預設路徑"
                 # 檢查 DLL 檔案是否真的存在
                 if self.dll_path and os.path.exists(self.dll_path):
-                    status_text = f"✅ 已連接醫院健保卡 DLL\n路徑: {dll_path}"
+                    status_text = f"✅ 已連接健保署讀卡機 DLL\n路徑: {dll_path}"
                 else:
                     status_text = f"⚠️ DLL 已載入但檔案可能不存在\n路徑: {dll_path}"
             else:
                 status_text = (
-                    "❌ 未找到醫院健保卡 DLL (使用模擬模式)\n\n"
+                    "❌ 未找到健保署讀卡機 DLL (使用模擬模式)\n\n"
                     "請確認：\n"
-                    "1. 醫院已安裝健保署讀卡機控制軟體\n"
+                    "1. 已安裝健保署讀卡機控制軟體\n"
                     "2. DLL 檔案路徑正確\n"
                     "3. 系統權限設定正確"
                 )
@@ -809,11 +810,11 @@ class MedicalCardApp:
                 test_dll = NHICardDLL(self.dll_path)
                 self.dll_enabled = True
                 self.dll_path = test_dll.dll_path
-                messagebox.showinfo("DLL 狀態", f"✅ 成功連接醫院健保卡 DLL\n路徑: {test_dll.dll_path}")
+                messagebox.showinfo("DLL 狀態", f"✅ 成功連接健保署讀卡機 DLL\n路徑: {test_dll.dll_path}")
                 logger.info(f"DLL 重新載入成功: {test_dll.dll_path}")
             except NHICardDLLError as e:
                 self.dll_enabled = False
-                messagebox.showwarning("DLL 狀態", f"❌ 無法載入醫院健保卡 DLL\n錯誤: {e}")
+                messagebox.showwarning("DLL 狀態", f"❌ 無法載入健保署讀卡機 DLL\n錯誤: {e}")
                 logger.warning(f"DLL 重新載入失敗: {e}")
             
             # 更新狀態顯示
