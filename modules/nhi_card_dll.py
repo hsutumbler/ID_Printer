@@ -62,7 +62,7 @@ class NHICardDLL:
             return 1
     
     def _get_default_dll_path(self):
-        """取得預設的 DLL 路徑 - 優先使用 GNT 的 NhiCard.dll"""
+        """取得預設的 DLL 路徑 - 優先使用健保署官方 DLL"""
         
         # 檢查配置檔案中指定的路徑（最高優先級）
         try:
@@ -76,7 +76,28 @@ class NHICardDLL:
         except Exception as e:
             logger.warning(f"讀取配置檔案 DLL 路徑失敗: {e}")
         
-        # 檢查是否有外部 GNT DLL（第二優先級）
+        # 檢查環境變數中的路徑（第二優先級）
+        nhi_path = os.environ.get("NHI_CARD_DLL_PATH")
+        if nhi_path and os.path.exists(nhi_path):
+            logger.info(f"使用環境變數中的 DLL 路徑: {nhi_path}")
+            return nhi_path
+        
+        # 健保署官方標準路徑（第三優先級）
+        standard_paths = [
+            r"C:\NHI\LIB\CsHis50.dll",                    # 健保署官方標準路徑（注意大小寫）
+            r"C:\NHI\LIB\csHis50.dll",                    # 健保署官方標準路徑（小寫）
+            r"C:\NHI\LIB\CSHIS.dll",                      # 健保署官方標準路徑（全大寫）
+            r"C:\Program Files\NHI\LIB\CsHis50.dll",      # Program Files 路徑
+            r"C:\Program Files (x86)\NHI\LIB\CsHis50.dll", # Program Files (x86) 路徑
+        ]
+        
+        # 尋找第一個存在的路徑
+        for path in standard_paths:
+            if os.path.exists(path):
+                logger.info(f"找到健保署官方健保卡 DLL: {path}")
+                return path
+        
+        # 檢查是否有外部 GNT DLL（第四優先級）
         # 注意：GNT 資料夾已移除，但保留檢查邏輯以防有其他位置的 GNT DLL
         potential_gnt_paths = [
             os.path.join(os.getcwd(), "GNT", "HenCs", "NhiCard.dll"),      # 原 GNT 路徑（已移除）
@@ -90,28 +111,9 @@ class NHICardDLL:
                 logger.info(f"找到外部 GNT 健保卡 DLL: {path}")
                 return path
         
-        # 檢查環境變數中的路徑（第三優先級）
-        nhi_path = os.environ.get("NHI_CARD_DLL_PATH")
-        if nhi_path and os.path.exists(nhi_path):
-            logger.info(f"使用環境變數中的 DLL 路徑: {nhi_path}")
-            return nhi_path
-        
-        # 健保署官方標準路徑（第四優先級）
-        standard_paths = [
-            r"C:\NHI\LIB\csHis50.dll",                    # 健保署官方標準路徑
-            r"C:\Program Files\NHI\LIB\csHis50.dll",      # Program Files 路徑
-            r"C:\Program Files (x86)\NHI\LIB\csHis50.dll", # Program Files (x86) 路徑
-        ]
-        
-        # 尋找第一個存在的路徑
-        for path in standard_paths:
-            if os.path.exists(path):
-                logger.info(f"找到健保署官方健保卡 DLL: {path}")
-                return path
-        
         # 如果都找不到，返回標準健保署路徑（讓錯誤訊息更清楚）
         logger.warning("未找到健保卡 DLL，將使用標準健保署路徑")
-        return r"C:\NHI\LIB\csHis50.dll"
+        return r"C:\NHI\LIB\CsHis50.dll"
     
     def _load_dll(self):
         """載入 DLL 並設定函式簽名"""

@@ -1,9 +1,31 @@
-2025-10-14 17:28:59,918 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM3
-2025-10-14 17:29:00,217 - MedicalCardApp - ERROR - 載入標準健保署 DLL 失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
-2025-10-14 17:29:00,217 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 載入標準健保署 DLL 失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
-2025-10-14 17:29:29,458 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM3
-2025-10-14 17:29:29,788 - MedicalCardApp - ERROR - 載入標準健保署 DLL 失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
-2025-10-14 17:29:29,788 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 載入標準健保署 DLL 失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
-2025-10-14 17:30:22,585 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM3
-2025-10-14 17:30:22,914 - MedicalCardApp - ERROR - 載入標準健保署 DLL 失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
-2025-10-14 17:30:22,915 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 載入標準健保署 DLL 失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
+2025-10-16 17:28:26,225 - MedicalCardApp - INFO - ==================================================
+2025-10-16 17:28:26,225 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-10-16 17:28:26,225 - MedicalCardApp - INFO - ==================================================
+2025-10-16 17:28:26,227 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-10-16 17:28:26,229 - MedicalCardApp - INFO - 從配置檔案讀取 DLL 路徑: C:\NHI\LIB\CsHis50.dll
+2025-10-16 17:28:26,434 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-10-16 17:28:26,435 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-10-16 17:28:26,435 - MedicalCardApp - INFO - 開始自動偵測讀卡機COM埠...
+2025-10-16 17:28:26,458 - MedicalCardApp - INFO - 發現 0 個COM埠: []
+2025-10-16 17:28:26,486 - MedicalCardApp - INFO - 從健保署設定檔案找到COM埠: COM3
+2025-10-16 17:28:26,596 - MedicalCardApp - WARNING - 無法自動偵測讀卡機COM埠，使用預設值 COM3
+2025-10-16 17:28:26,596 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-10-16 17:28:26,596 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-10-16 17:28:26,596 - MedicalCardApp - INFO - COM埠自動偵測: 啟用
+2025-10-16 17:28:26,596 - MedicalCardApp - INFO - 使用COM埠: COM3
+2025-10-16 17:28:26,599 - MedicalCardApp - INFO - 讀卡機 COM 埠設定: COM3
+2025-10-16 17:28:27,889 - MedicalCardApp - ERROR - 載入標準健保署 DLL 失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
+2025-10-16 17:28:27,891 - MedicalCardApp - ERROR - 健保卡 DLL 載入失敗: 載入標準健保署 DLL 失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
+2025-10-16 17:28:27,892 - MedicalCardApp - WARNING - 無法載入健保卡 DLL: 無法載入健保卡 DLL: 載入標準健保署 DLL 失敗: [WinError 193] %1 不是有效的 Win32 應用程式。
+2025-10-16 17:28:27,894 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (離線模式)
+2025-10-16 17:28:27,896 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-10-16 17:28:28,127 - MedicalCardApp - INFO - 成功註冊中文字體: C:/Windows/Fonts/msjh.ttc
+2025-10-16 17:28:28,128 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-10-16 17:28:28,128 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: d:\Project\ID_Printer\ID_Printer\records
+2025-10-16 17:28:28,129 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-10-16 17:28:28,350 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-16 17:28:28,426 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-16 17:28:29,119 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 0 次, 共 0 張標籤
+2025-10-16 17:28:29,120 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-10-16 17:28:35,766 - MedicalCardApp - INFO - 使用者關閉程式
+2025-10-16 17:28:35,880 - MedicalCardApp - INFO - 應用程式正常結束

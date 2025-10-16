@@ -342,6 +342,38 @@ class MedicalCardApp:
                                          command=self.refresh_dll_status, width=20)
         refresh_status_button.pack(pady=5)
         
+        # COM埠設定區
+        com_frame = ttk.LabelFrame(settings_main_frame, text="COM埠設定", padding=15)
+        com_frame.pack(fill='x', pady=15)
+        
+        # COM埠狀態顯示
+        self.com_status_text = tk.StringVar()
+        self.update_com_status()
+        
+        com_status_label = ttk.Label(com_frame, textvariable=self.com_status_text, 
+                                   font=(self.default_font, 11))
+        com_status_label.pack(pady=10)
+        
+        # COM埠設定按鈕
+        com_button_frame = ttk.Frame(com_frame)
+        com_button_frame.pack(pady=10)
+        
+        # 自動偵測按鈕
+        auto_detect_button = ttk.Button(com_button_frame, text="自動偵測COM埠", 
+                                       command=self.auto_detect_com_port, width=20)
+        auto_detect_button.pack(side='left', padx=5)
+        
+        # 手動設定按鈕
+        manual_set_button = ttk.Button(com_button_frame, text="手動設定COM埠", 
+                                      command=self.show_com_port_dialog, width=20)
+        manual_set_button.pack(side='right', padx=5)
+        
+        # COM埠說明
+        com_info_label = ttk.Label(com_frame, 
+                                 text="如果讀卡機無法正常工作，請嘗試重新偵測或手動設定COM埠",
+                                 foreground="gray", wraplength=500)
+        com_info_label.pack(pady=5)
+        
         # 印表機設定
         printer_frame = ttk.LabelFrame(settings_main_frame, text="印表機設定", padding=15)
         printer_frame.pack(fill='x', pady=15)
@@ -409,19 +441,20 @@ class MedicalCardApp:
             
             # 根據離線模式設定不同的狀態訊息
             if self.offline_mode:
-                self.status_text.set("離線模式 - 讀取成功！" + ("正在自動列印..." if self.offline_auto_print else "請確認資料並設定列印張數"))
+                self.status_text.set("離線模式 - 讀取成功！請確認資料並設定列印張數")
             else:
                 self.status_text.set("讀取成功！請確認資料並設定列印張數")
             
             self.print_button.config(state=tk.NORMAL)
             
-            # 離線模式自動列印
-            if self.offline_mode and self.offline_auto_print:
-                logger.info("離線模式自動列印啟用")
-                # 使用預設列印張數 (1張)
-                self.print_count_var.set("1")
-                # 延遲一秒後自動列印，讓使用者看到資料
-                self.root.after(1000, self._auto_print_offline)
+            # 顯示確認對話框，提醒醫檢師核對病人身分
+            confirm_msg = f"健保卡讀取成功！\n\n" \
+                         f"病人: {processed_data['name']}\n" \
+                         f"身分證: {processed_data['id']}\n" \
+                         f"出生日期: {processed_data['dob']}\n\n" \
+                         f"⚠️ 請仔細核對病人身分，確認無誤後再列印標籤！"
+            
+            messagebox.showinfo("讀取成功", confirm_msg)
             
             # 記錄讀取事件
             try:
@@ -458,8 +491,20 @@ class MedicalCardApp:
         # 在狀態列顯示簡短錯誤訊息
         self.status_text.set(f"讀取失敗: {short_error}")
         
-        # 在對話框中顯示完整錯誤訊息
-        messagebox.showerror("讀取錯誤", f"讀取健保卡失敗:\n{error_msg}")
+        # 檢查是否為離線模式錯誤
+        if "離線模式" in error_msg and "請手動輸入病人資料" in error_msg:
+            # 在離線模式下，提供手動輸入選項
+            if messagebox.askyesno("離線模式", 
+                "無法讀取健保卡，是否要手動輸入病人資料？\n\n"
+                "請確認：\n"
+                "1. 輸入的資料必須正確無誤\n"
+                "2. 避免醫療錯誤\n"
+                "3. 仔細核對病人身分"):
+                self.show_manual_input_dialog()
+        else:
+            # 在對話框中顯示完整錯誤訊息
+            messagebox.showerror("讀取錯誤", f"讀取健保卡失敗:\n{error_msg}")
+        
         logger.error(f"讀取健保卡失敗: {error_msg}")
         
         # 確保按鈕可用
@@ -480,10 +525,7 @@ class MedicalCardApp:
                 messagebox.showwarning("列印錯誤", "請先讀取健保卡資料")
                 return
 
-            # 確認列印
-            confirm_msg = f"確定要列印 {print_count} 張標籤嗎？\n\n病人: {self.current_patient_data['name']}\n身分證: {self.current_patient_data['id']}"
-            if not messagebox.askyesno("確認列印", confirm_msg):
-                return
+            # 直接列印，不顯示確認對話框
 
             # 開始列印
             self.status_text.set(f"標籤列印中... (共 {print_count} 張)")
@@ -511,7 +553,6 @@ class MedicalCardApp:
             self.status_text.set(f"列印完成！已列印 {print_count} 張標籤")
             self.update_statistics()
             
-            messagebox.showinfo("列印完成", f"已成功列印 {print_count} 張標籤")
             logger.info(f"列印成功，病人: {self.current_patient_data['name']}，共 {print_count} 張")
 
         except PrintManagerError as e:
@@ -548,56 +589,6 @@ class MedicalCardApp:
             self.print_button.config(state=tk.NORMAL)
             self.read_button.config(state=tk.NORMAL)
     
-    def _auto_print_offline(self):
-        """離線模式自動列印功能"""
-        try:
-            if not self.current_patient_data:
-                logger.warning("離線模式自動列印失敗：無病人資料")
-                self.status_text.set("離線模式 - 自動列印失敗：無病人資料")
-                return
-            
-            logger.info("執行離線模式自動列印")
-            self.status_text.set("離線模式 - 正在列印標籤...")
-            
-            # 取得列印張數
-            print_count = int(self.print_count_var.get())
-            
-            # 執行列印
-            self.print_manager.print_labels(self.current_patient_data, print_count)
-            
-            # 記錄列印事件
-            print_time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-            try:
-                self.record_manager.log_operation(
-                    self.current_patient_data, 
-                    print_time, 
-                    print_count, 
-                    "列印 (離線自動)"
-                )
-            except RecordManagerError as e:
-                logger.warning(f"記錄列印事件失敗: {e}")
-            
-            # 更新狀態和統計
-            success_msg = f"離線模式 - 自動列印完成！已列印 {print_count} 張標籤"
-            self.status_text.set(success_msg)
-            self.update_statistics()
-            
-            logger.info(f"離線模式自動列印成功，病人: {self.current_patient_data['name']}，共 {print_count} 張")
-            
-        except PrintManagerError as e:
-            error_msg = f"離線模式自動列印失敗: {e}"
-            logger.error(error_msg)
-            self.status_text.set(error_msg)
-            # 顯示錯誤對話框
-            messagebox.showerror("自動列印失敗", error_msg)
-            
-        except Exception as e:
-            error_msg = f"離線模式自動列印時發生未知錯誤: {e}"
-            logger.error(error_msg)
-            self.status_text.set(error_msg)
-            # 顯示錯誤對話框
-            messagebox.showerror("自動列印失敗", error_msg)
-
     def clear_data(self):
         """清除病人資料"""
         if messagebox.askyesno("確認清除", "確定要清除目前的病人資料嗎？"):
@@ -1141,17 +1132,373 @@ class MedicalCardApp:
     def launch_csfsim(self):
         """啟動健保署讀卡機控制軟體"""
         try:
+            # 檢查檔案是否存在
+            csfsim_path = self.card_reader.csfsim_path
+            if not csfsim_path or not os.path.exists(csfsim_path):
+                error_msg = f"找不到健保署讀卡機控制軟體:\n{csfsim_path}\n\n" \
+                           f"請檢查配置檔案中的 csfsim_path 設定"
+                self.status_text.set("找不到健保署讀卡機控制軟體")
+                messagebox.showerror("檔案不存在", error_msg)
+                return
+            
+            # 嘗試啟動
             result = self.card_reader.launch_csfsim()
             if result:
                 self.status_text.set("已嘗試啟動健保署讀卡機控制軟體，請稍候...")
-                messagebox.showinfo("啟動成功", "已嘗試啟動健保署讀卡機控制軟體，請稍候...")
+                messagebox.showinfo("啟動成功", 
+                    f"已嘗試啟動健保署讀卡機控制軟體\n\n"
+                    f"路徑: {csfsim_path}\n\n"
+                    f"如果程式沒有出現，請檢查：\n"
+                    f"1. 程式是否已在背景運行\n"
+                    f"2. 防毒軟體是否阻擋\n"
+                    f"3. 系統權限是否足夠")
             else:
-                self.status_text.set("無法啟動健保署讀卡機控制軟體，請檢查路徑設定")
-                messagebox.showerror("啟動失敗", "無法啟動健保署讀卡機控制軟體，請檢查路徑設定")
+                error_msg = f"無法啟動健保署讀卡機控制軟體\n\n" \
+                           f"路徑: {csfsim_path}\n\n" \
+                           f"可能的原因：\n" \
+                           f"1. 程式檔案損壞\n" \
+                           f"2. 系統權限不足\n" \
+                           f"3. 防毒軟體阻擋\n" \
+                           f"4. 程式已在運行\n\n" \
+                           f"請查看日誌檔案獲取詳細錯誤資訊"
+                self.status_text.set("無法啟動健保署讀卡機控制軟體")
+                messagebox.showerror("啟動失敗", error_msg)
         except Exception as e:
+            error_msg = f"啟動健保署讀卡機控制軟體時發生錯誤:\n{e}\n\n" \
+                       f"請查看日誌檔案獲取詳細錯誤資訊"
             self.status_text.set(f"啟動健保署讀卡機控制軟體時發生錯誤: {e}")
-            messagebox.showerror("啟動錯誤", f"啟動健保署讀卡機控制軟體時發生錯誤:\n{e}")
+            messagebox.showerror("啟動錯誤", error_msg)
             
+    def show_manual_input_dialog(self):
+        """顯示手動輸入病人資料對話框"""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("手動輸入病人資料")
+        dialog.geometry("500x400")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # 置中顯示
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (500 // 2)
+        y = (dialog.winfo_screenheight() // 2) - (400 // 2)
+        dialog.geometry(f"500x400+{x}+{y}")
+        
+        # 主要框架
+        main_frame = ttk.Frame(dialog, padding=20)
+        main_frame.pack(fill='both', expand=True)
+        
+        # 標題
+        title_label = ttk.Label(main_frame, text="手動輸入病人資料", 
+                               font=(self.default_font, 14, "bold"))
+        title_label.pack(pady=(0, 20))
+        
+        # 警告標籤
+        warning_label = ttk.Label(main_frame, 
+                                 text="⚠️ 請仔細核對病人身分，確保資料正確無誤！",
+                                 foreground="red", font=(self.default_font, 10, "bold"))
+        warning_label.pack(pady=(0, 15))
+        
+        # 輸入欄位
+        input_frame = ttk.Frame(main_frame)
+        input_frame.pack(fill='x', pady=10)
+        
+        # 身分證字號
+        ttk.Label(input_frame, text="身分證字號:", width=12, anchor='w').grid(row=0, column=0, sticky='w', pady=5)
+        id_var = tk.StringVar()
+        id_entry = ttk.Entry(input_frame, textvariable=id_var, width=20)
+        id_entry.grid(row=0, column=1, sticky='ew', pady=5, padx=5)
+        
+        # 姓名
+        ttk.Label(input_frame, text="姓名:", width=12, anchor='w').grid(row=1, column=0, sticky='w', pady=5)
+        name_var = tk.StringVar()
+        name_entry = ttk.Entry(input_frame, textvariable=name_var, width=20)
+        name_entry.grid(row=1, column=1, sticky='ew', pady=5, padx=5)
+        
+        # 出生日期
+        ttk.Label(input_frame, text="出生日期:", width=12, anchor='w').grid(row=2, column=0, sticky='w', pady=5)
+        dob_var = tk.StringVar()
+        dob_entry = ttk.Entry(input_frame, textvariable=dob_var, width=20)
+        dob_entry.grid(row=2, column=1, sticky='ew', pady=5, padx=5)
+        ttk.Label(input_frame, text="(格式: YYYY/MM/DD)", foreground="gray").grid(row=2, column=2, sticky='w', pady=5, padx=5)
+        
+        # 設定欄位權重
+        input_frame.columnconfigure(1, weight=1)
+        
+        # 按鈕框架
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill='x', pady=20)
+        
+        def confirm_input():
+            # 驗證輸入
+            if not id_var.get().strip():
+                messagebox.showerror("輸入錯誤", "請輸入身分證字號")
+                return
+            if not name_var.get().strip():
+                messagebox.showerror("輸入錯誤", "請輸入姓名")
+                return
+            if not dob_var.get().strip():
+                messagebox.showerror("輸入錯誤", "請輸入出生日期")
+                return
+            
+            # 建立病人資料
+            from .data_processor import DataProcessor
+            import datetime
+            
+            raw_data = {
+                "ID_NUMBER": id_var.get().strip(),
+                "FULL_NAME": name_var.get().strip(),
+                "BIRTH_DATE": dob_var.get().strip(),
+                "SEX": ""  # 移除性別欄位
+            }
+            
+            try:
+                # 處理資料
+                processor = DataProcessor()
+                processed_data = processor.process_raw_data(raw_data)
+                self.current_patient_data = processed_data
+                
+                # 更新 UI 顯示
+                self.patient_id_var.set(processed_data["id"])
+                self.patient_name_var.set(processed_data["name"])
+                self.patient_dob_var.set(processed_data["dob"])
+                self.patient_sex_var.set(processed_data.get("sex", ""))
+                self.read_time_var.set(processed_data["read_time"])
+                
+                # 更新狀態
+                self.status_text.set("手動輸入完成！請確認資料並設定列印張數")
+                self.print_button.config(state=tk.NORMAL)
+                
+                # 記錄操作
+                try:
+                    self.record_manager.log_operation(
+                        processed_data, 
+                        processed_data["read_time"], 
+                        0, 
+                        "手動輸入 (離線模式)"
+                    )
+                except Exception as e:
+                    logger.warning(f"記錄手動輸入事件失敗: {e}")
+                
+                # 更新統計
+                self.update_statistics()
+                
+                logger.info(f"手動輸入病人資料成功，病人: {processed_data['name']}")
+                
+                # 關閉對話框
+                dialog.destroy()
+                
+                # 顯示確認訊息
+                messagebox.showinfo("輸入完成", f"已成功輸入病人資料：\n\n姓名: {processed_data['name']}\n身分證: {processed_data['id']}")
+                
+            except Exception as e:
+                messagebox.showerror("處理錯誤", f"處理輸入資料時發生錯誤:\n{e}")
+                logger.error(f"處理手動輸入資料失敗: {e}")
+        
+        def cancel_input():
+            dialog.destroy()
+        
+        # 按鈕
+        confirm_button = ttk.Button(button_frame, text="確認輸入", command=confirm_input, width=15)
+        confirm_button.pack(side='left', padx=10)
+        
+        cancel_button = ttk.Button(button_frame, text="取消", command=cancel_input, width=15)
+        cancel_button.pack(side='left', padx=10)
+        
+        # 焦點設定
+        id_entry.focus()
+        
+        # 綁定 Enter 鍵
+        def on_enter(event):
+            confirm_input()
+        
+        id_entry.bind('<Return>', on_enter)
+        name_entry.bind('<Return>', on_enter)
+        dob_entry.bind('<Return>', on_enter)
+
+    def update_com_status(self):
+        """更新COM埠狀態顯示"""
+        try:
+            com_port = self.card_reader.com_port
+            auto_detect = self.card_reader.auto_detect_com
+            
+            if auto_detect:
+                status_text = f"目前使用: COM{com_port} (自動偵測)"
+            else:
+                status_text = f"目前使用: COM{com_port} (手動設定)"
+            
+            # 測試COM埠是否可用
+            if self.card_reader._test_com_port(com_port):
+                status_text += " ✓ 可用"
+            else:
+                status_text += " ✗ 無法連接"
+            
+            self.com_status_text.set(status_text)
+        except Exception as e:
+            logger.error(f"更新COM埠狀態失敗: {e}")
+            self.com_status_text.set("COM埠狀態: 未知")
+
+    def auto_detect_com_port(self):
+        """自動偵測COM埠"""
+        try:
+            self.status_text.set("正在自動偵測COM埠...")
+            
+            # 重新偵測COM埠
+            new_port = self.card_reader._detect_com_port()
+            
+            if new_port != self.card_reader.com_port:
+                self.card_reader.com_port = new_port
+                logger.info(f"COM埠已更新為: COM{new_port}")
+            
+            # 更新狀態顯示
+            self.update_com_status()
+            
+            # 顯示結果
+            messagebox.showinfo("自動偵測完成", 
+                               f"偵測完成！\n\n"
+                               f"目前使用: COM{new_port}\n"
+                               f"請測試讀卡機是否正常工作")
+            
+            self.status_text.set(f"COM埠已更新為: COM{new_port}")
+            
+        except Exception as e:
+            logger.error(f"自動偵測COM埠失敗: {e}")
+            messagebox.showerror("偵測失敗", f"自動偵測COM埠失敗:\n{e}")
+
+    def show_com_port_dialog(self):
+        """顯示COM埠設定對話框"""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("手動設定COM埠")
+        dialog.geometry("400x300")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # 置中顯示
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (400 // 2)
+        y = (dialog.winfo_screenheight() // 2) - (300 // 2)
+        dialog.geometry(f"400x300+{x}+{y}")
+        
+        # 主框架
+        main_frame = ttk.Frame(dialog, padding=20)
+        main_frame.pack(fill='both', expand=True)
+        
+        # 標題
+        title_label = ttk.Label(main_frame, text="COM埠設定", 
+                               font=(self.default_font, 14, "bold"))
+        title_label.pack(pady=(0, 20))
+        
+        # 說明文字
+        info_label = ttk.Label(main_frame, 
+                              text="請選擇要使用的COM埠：",
+                              font=(self.default_font, 11))
+        info_label.pack(pady=(0, 15))
+        
+        # 可用COM埠列表
+        ports_frame = ttk.LabelFrame(main_frame, text="可用的COM埠", padding=10)
+        ports_frame.pack(fill='x', pady=10)
+        
+        # 取得可用COM埠
+        try:
+            available_ports = self.card_reader.get_available_com_ports()
+            
+            if not available_ports:
+                no_ports_label = ttk.Label(ports_frame, text="未發現任何COM埠", 
+                                          foreground="red")
+                no_ports_label.pack()
+            else:
+                # 建立COM埠選擇框架
+                port_var = tk.StringVar()
+                port_var.set(f"COM{self.card_reader.com_port}")  # 預設選擇目前使用的COM埠
+                
+                for i, port in enumerate(available_ports):
+                    port_text = f"{port['device']} - {port['description']}"
+                    if port['manufacturer']:
+                        port_text += f" ({port['manufacturer']})"
+                    
+                    radio = ttk.Radiobutton(ports_frame, text=port_text, 
+                                          variable=port_var, value=port['device'])
+                    radio.pack(anchor='w', pady=2)
+                    
+        except Exception as e:
+            error_label = ttk.Label(ports_frame, text=f"無法取得COM埠列表: {e}", 
+                                   foreground="red")
+            error_label.pack()
+        
+        # 手動輸入COM埠
+        manual_frame = ttk.LabelFrame(main_frame, text="手動輸入", padding=10)
+        manual_frame.pack(fill='x', pady=10)
+        
+        manual_label = ttk.Label(manual_frame, text="或手動輸入COM埠號碼:")
+        manual_label.pack(anchor='w')
+        
+        manual_var = tk.StringVar()
+        manual_entry = ttk.Entry(manual_frame, textvariable=manual_var, width=10)
+        manual_entry.pack(anchor='w', pady=5)
+        
+        # 按鈕框架
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill='x', pady=20)
+        
+        def confirm_setting():
+            try:
+                # 取得選擇的COM埠
+                selected_port = port_var.get()
+                
+                # 如果手動輸入了COM埠號碼
+                if manual_var.get().strip():
+                    try:
+                        port_num = int(manual_var.get().strip())
+                        selected_port = f"COM{port_num}"
+                    except ValueError:
+                        messagebox.showerror("輸入錯誤", "COM埠號碼必須是數字")
+                        return
+                
+                # 提取COM埠號碼
+                port_num = int(selected_port.replace('COM', ''))
+                
+                # 測試COM埠
+                if self.card_reader.set_com_port(port_num):
+                    # 更新狀態顯示
+                    self.update_com_status()
+                    
+                    # 關閉對話框
+                    dialog.destroy()
+                    
+                    # 顯示成功訊息
+                    messagebox.showinfo("設定成功", 
+                                       f"COM埠已設定為: COM{port_num}\n\n"
+                                       f"請測試讀卡機是否正常工作")
+                    
+                    self.status_text.set(f"COM埠已設定為: COM{port_num}")
+                else:
+                    messagebox.showerror("設定失敗", 
+                                        f"無法設定COM埠: COM{port_num}\n\n"
+                                        f"請確認：\n"
+                                        f"1. COM埠號碼正確\n"
+                                        f"2. 讀卡機已連接\n"
+                                        f"3. 沒有其他程式使用此COM埠")
+                    
+            except Exception as e:
+                logger.error(f"設定COM埠失敗: {e}")
+                messagebox.showerror("設定失敗", f"設定COM埠時發生錯誤:\n{e}")
+        
+        def cancel_setting():
+            dialog.destroy()
+        
+        # 按鈕
+        confirm_button = ttk.Button(button_frame, text="確認設定", 
+                                   command=confirm_setting, width=15)
+        confirm_button.pack(side='left', padx=10)
+        
+        cancel_button = ttk.Button(button_frame, text="取消", 
+                                 command=cancel_setting, width=15)
+        cancel_button.pack(side='left', padx=10)
+        
+        # 焦點設定
+        manual_entry.focus()
+
     def on_closing(self):
         """程式關閉時的處理"""
         if messagebox.askokcancel("退出", "確定要退出程式嗎？"):

@@ -240,14 +240,9 @@ class PrintManager:
             system = platform.system()
             
             if system == "Windows":
-                if self.show_print_dialog:
-                    # 顯示列印對話框
-                    logger.info(f"開啟檔案並顯示列印對話框: {filename}")
-                    os.startfile(filename)
-                else:
-                    # 使用預設印表機直接列印
-                    logger.info(f"使用預設印表機直接列印: {filename}")
-                    os.startfile(filename, "print")
+                # 直接列印到標籤機，不顯示對話框
+                logger.info(f"直接列印到標籤機: {filename}")
+                os.startfile(filename, "print")
             elif system == "Darwin":  # macOS
                 if self.show_print_dialog:
                     # 開啟檔案讓使用者手動列印
