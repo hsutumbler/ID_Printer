@@ -69,12 +69,21 @@ class DataProcessor:
                     patient_sex = "未知"
             else:
                 patient_sex = ""
+            
+            # 處理健保卡號後四碼
+            card_number = raw_data.get("CARD_NUMBER", "").strip()
+            if card_number and len(card_number) >= 4:
+                # 取得後四碼
+                card_no_last4 = card_number[-4:]
+            else:
+                card_no_last4 = ""
 
             processed_data = {
                 "id": patient_id,
                 "name": patient_name,
                 "dob": patient_dob,
                 "sex": patient_sex,
+                "card_no": card_no_last4,
                 "read_time": datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
             }
             

@@ -350,29 +350,28 @@ class CardReader:
                     # 等待使用者在 csfsim 中操作讀卡機
                     logger.info("健保署讀卡機控制軟體已啟動，請在其中讀取健保卡")
                     
-                    # 由於我們無法直接從 csfsim 獲取資料，使用測試資料作為替代
+                    # 由於我們無法直接從 csfsim 獲取資料，暫時拋出錯誤提示使用者
                     # 在實際環境中，應該實作與 csfsim 的資料交換機制
-                    time.sleep(3)  # 等待使用者操作
-                    
-                    # 使用測試資料
-                    test_data = self._test_mode_read_card()
-                    logger.info(f"成功讀取健保卡，病人: {test_data.get('FULL_NAME')}")
-                    return test_data
+                    raise CardReaderError(
+                        "請在健保署讀卡機控制軟體中完成讀卡操作。\n\n"
+                        "操作步驟：\n"
+                        "1. 確認健保卡已正確插入讀卡機\n"
+                        "2. 在 csfsim 視窗中點擊讀取\n"
+                        "3. 完成後關閉 csfsim 視窗\n"
+                        "4. 回到本程式重新點擊讀取按鈕"
+                    )
                 else:
-                    # 啟動失敗
+                    # 啟動失敗 - 可能是安全模組檔案問題
                     error_msg = (
-                        "啟動健保署讀卡機控制軟體失敗。\n\n"
-                        "請確認：\n"
-                        f"1. {self.csfsim_path} 檔案存在\n"
-                        "2. 您有足夠權限執行此程式\n"
-                        "3. 讀卡機已正確連接並開啟電源\n"
-                        f"4. COM 埠設定正確 (目前設定: COM{self.com_port})\n"
-                        "5. 健保署環境設定完整\n\n"
-                        "診斷資訊：\n"
-                        f"- csfsim.exe 路徑: {self.csfsim_path}\n"
-                        f"- 檔案存在: {'是' if os.path.exists(self.csfsim_path) else '否'}\n"
-                        f"- 健保署目錄: {'存在' if os.path.exists('C:/NHI') else '不存在'}\n"
-                        f"- COM 埠設定: COM{self.com_port}\n"
+                        "健保署讀卡機控制軟體啟動失敗。\n\n"
+                        "常見問題解決方法：\n"
+                        "1. 檢查健保卡是否正確插入讀卡機\n"
+                        "2. 確認讀卡機電源已開啟\n"
+                        "3. 重新安裝健保署讀卡機控制軟體\n"
+                        "4. 以系統管理員身分執行本程式\n\n"
+                        "如果出現「安全模組檔目錄錯誤」：\n"
+                        "- 請聯繫 IT 部門重新設定健保署環境\n"
+                        "- 可能需要重新下載安全模組檔案"
                     )
                     raise CardReaderError(error_msg)
             except Exception as e:
@@ -382,26 +381,13 @@ class CardReader:
         # 如果沒有找到 csfsim.exe
         else:
             if self.offline_mode:
-                # 離線模式：提示使用者檢查硬體
+                # 離線模式：簡化錯誤訊息
                 time.sleep(1)  # 模擬讀卡時間
                 logger.warning(f"離線模式：未找到健保署讀卡機控制軟體: {self.csfsim_path}")
-                error_msg = (
-                    "離線模式健保卡讀取失敗。\n\n"
-                    "請檢查：\n"
-                    "1. 健保卡是否正確插入讀卡機\n"
-                    "2. 讀卡機是否正確連接並開啟電源\n"
-                    f"3. 健保署讀卡機控制軟體是否已安裝在 {self.csfsim_path}\n"
-                    f"4. COM 埠設定是否正確 (目前設定: COM{self.com_port})\n"
-                    "5. 健保署環境設定是否完整\n\n"
-                    "診斷資訊：\n"
-                    f"- csfsim.exe 路徑: {self.csfsim_path}\n"
-                    f"- 檔案存在: {'是' if os.path.exists(self.csfsim_path) else '否'}\n"
-                    f"- 健保署目錄: {'存在' if os.path.exists('C:/NHI') else '不存在'}\n"
-                    f"- COM 埠設定: COM{self.com_port}\n"
-                    f"- 自動偵測: {'啟用' if self.auto_detect_com else '停用'}\n\n"
-                    "如需協助，請聯繫 IT 部門。"
+                raise CardReaderError(
+                    "未找到健保署讀卡機控制軟體。\n\n"
+                    "請聯繫 IT 部門確認軟體安裝狀態。"
                 )
-                raise CardReaderError(error_msg)
             else:
                 # 一般模式：提供完整安裝指引
                 time.sleep(1)  # 模擬讀卡時間
