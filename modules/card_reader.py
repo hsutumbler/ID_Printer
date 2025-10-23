@@ -335,63 +335,213 @@ class CardReader:
     def _simulate_read_card(self):
         """
         讀取健保卡
-        支援離線模式和 csfsim 控制軟體
+        優先使用 DLL 直接呼叫，失敗時使用 csfsim 控制軟體
         """
         logger.info("開始讀取健保卡...")
         
+        # 優先嘗試使用 DLL 直接讀取
+        if self.use_dll:
+            try:
+                logger.info("使用 DLL 直接讀取健保卡")
+                card_data = self.nhi_dll.read_card()
+                logger.info(f"DLL 讀取成功，病人: {card_data.get('FULL_NAME', 'N/A')}")
+                return card_data
+            except Exception as e:
+                logger.warning(f"DLL 讀取失敗: {e}，嘗試使用 csReadCard")
+                # DLL 讀取失敗，嘗試使用 csReadCard
+                try:
+                    card_data = self._read_card_with_csreadcard()
+                    logger.info(f"csReadCard 讀取成功，病人: {card_data.get('FULL_NAME', 'N/A')}")
+                    return card_data
+                except Exception as e2:
+                    logger.error(f"csReadCard 也失敗: {e2}")
+                    # 兩種方法都失敗，拋出錯誤
+                    raise CardReaderError(f"健保卡讀取失敗: {e2}")
+        
+        # 如果沒有 DLL，直接嘗試 csReadCard
+        else:
+            try:
+                logger.info("使用 csReadCard 讀取健保卡")
+                card_data = self._read_card_with_csreadcard()
+                logger.info(f"csReadCard 讀取成功，病人: {card_data.get('FULL_NAME', 'N/A')}")
+                return card_data
+            except Exception as e:
+                logger.error(f"csReadCard 讀取失敗: {e}")
+                # csReadCard 失敗，嘗試使用 csfsim 作為備用方案
+                return self._fallback_to_csfsim()
+    
+    def _read_card_with_csreadcard(self):
+        """使用 csReadCard 函式讀取健保卡"""
+        try:
+            import ctypes
+            from ctypes import c_char_p, c_int, byref, create_string_buffer
+            
+            # 載入健保署 DLL
+            dll_path = r"C:\NHI\BIN\NHIDLL.dll"  # 預設路徑
+            if not os.path.exists(dll_path):
+                # 嘗試其他可能的路徑
+                possible_paths = [
+                    r"C:\NHI\BIN\csdll.dll",
+                    r"C:\Program Files\NHI\BIN\NHIDLL.dll",
+                    r"C:\Program Files (x86)\NHI\BIN\NHIDLL.dll"
+                ]
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        dll_path = path
+                        break
+                else:
+                    raise CardReaderError("找不到健保署 DLL 檔案")
+            
+            logger.info(f"載入健保署 DLL: {dll_path}")
+            dll = ctypes.CDLL(dll_path)
+            
+            # 設定 csReadCard 函式簽名
+            dll.csReadCard.restype = c_int
+            dll.csReadCard.argtypes = [c_char_p]
+            
+            # 建立緩衝區接收資料
+            buffer_size = 1024
+            buffer = create_string_buffer(buffer_size)
+            
+            # 呼叫 csReadCard
+            logger.info("呼叫 csReadCard 函式")
+            result = dll.csReadCard(buffer)
+            
+            if result == 0:  # 假設 0 表示成功
+                # 取得回傳的字串資料
+                raw_data = buffer.value.decode('big5', errors='ignore')
+                logger.info(f"csReadCard 回傳原始資料: {repr(raw_data)}")
+                
+                # 解析資料
+                parsed_data = self._parse_csreadcard_data(raw_data)
+                return parsed_data
+            else:
+                raise CardReaderError(f"csReadCard 執行失敗，錯誤碼: {result}")
+                
+        except Exception as e:
+            logger.error(f"csReadCard 呼叫失敗: {e}")
+            raise CardReaderError(f"csReadCard 呼叫失敗: {e}")
+    
+    def _parse_csreadcard_data(self, raw_data):
+        """解析 csReadCard 回傳的資料"""
+        try:
+            logger.info(f"開始解析 csReadCard 資料: {repr(raw_data)}")
+            
+            # 移除空白字符
+            data = raw_data.strip()
+            
+            if not data:
+                raise CardReaderError("csReadCard 回傳空資料")
+            
+            # 嘗試不同的解析方式
+            parsed_data = None
+            
+            # 方法1: 嘗試分隔符解析
+            for delimiter in ['|', ',', '\t', ';']:
+                if delimiter in data:
+                    parts = data.split(delimiter)
+                    if len(parts) >= 3:  # 至少要有身分證、姓名、出生日期
+                        parsed_data = self._parse_delimited_data(parts)
+                        logger.info(f"使用分隔符 '{delimiter}' 解析成功")
+                        break
+            
+            # 方法2: 如果沒有分隔符，嘗試固定長度解析
+            if not parsed_data:
+                parsed_data = self._parse_fixed_length_data(data)
+                logger.info("使用固定長度解析")
+            
+            # 方法3: 如果都失敗，嘗試正則表達式解析
+            if not parsed_data:
+                parsed_data = self._parse_regex_data(data)
+                logger.info("使用正則表達式解析")
+            
+            if not parsed_data:
+                raise CardReaderError("無法解析 csReadCard 回傳的資料格式")
+            
+            logger.info(f"解析結果: {parsed_data}")
+            return parsed_data
+            
+        except Exception as e:
+            logger.error(f"解析 csReadCard 資料失敗: {e}")
+            raise CardReaderError(f"解析健保卡資料失敗: {e}")
+    
+    def _parse_delimited_data(self, parts):
+        """解析分隔符格式的資料"""
+        try:
+            # 假設格式: 身分證|姓名|出生日期|性別|健保卡號
+            return {
+                "ID_NUMBER": parts[0].strip() if len(parts) > 0 else "",
+                "FULL_NAME": parts[1].strip() if len(parts) > 1 else "",
+                "BIRTH_DATE": parts[2].strip() if len(parts) > 2 else "",
+                "SEX": parts[3].strip() if len(parts) > 3 else "",
+                "CARD_NUMBER": parts[4].strip() if len(parts) > 4 else ""
+            }
+        except Exception as e:
+            logger.error(f"分隔符解析失敗: {e}")
+            return None
+    
+    def _parse_fixed_length_data(self, data):
+        """解析固定長度格式的資料"""
+        try:
+            # 假設格式: 身分證10位 + 姓名20位 + 出生日期8位 + 性別1位 + 健保卡號12位
+            if len(data) >= 38:  # 最少需要的長度
+                return {
+                    "ID_NUMBER": data[0:10].strip(),
+                    "FULL_NAME": data[10:30].strip(),
+                    "BIRTH_DATE": data[30:38].strip(),
+                    "SEX": data[38:39].strip() if len(data) > 38 else "",
+                    "CARD_NUMBER": data[39:51].strip() if len(data) > 50 else ""
+                }
+        except Exception as e:
+            logger.error(f"固定長度解析失敗: {e}")
+        return None
+    
+    def _parse_regex_data(self, data):
+        """使用正則表達式解析資料"""
+        try:
+            import re
+            
+            # 身分證字號模式 (1個英文字母 + 9個數字)
+            id_match = re.search(r'[A-Z]\d{9}', data)
+            
+            # 出生日期模式 (8個數字，可能是民國年或西元年)
+            birth_match = re.search(r'\d{7,8}', data)
+            
+            # 姓名模式 (中文字符)
+            name_match = re.search(r'[\u4e00-\u9fff]+', data)
+            
+            if id_match and name_match:
+                return {
+                    "ID_NUMBER": id_match.group(),
+                    "FULL_NAME": name_match.group(),
+                    "BIRTH_DATE": birth_match.group() if birth_match else "",
+                    "SEX": "",
+                    "CARD_NUMBER": ""
+                }
+        except Exception as e:
+            logger.error(f"正則表達式解析失敗: {e}")
+        return None
+    
+    def _fallback_to_csfsim(self):
+        """備用方案：使用 csfsim 控制軟體"""
         # 嘗試使用 csfsim.exe 讀取健保卡
         if os.path.exists(self.csfsim_path):
-            try:
-                # 啟動健保署讀卡機控制軟體
-                logger.info(f"使用健保署讀卡機控制軟體讀取健保卡: {self.csfsim_path}")
-                success = self.launch_csfsim()
-                
-                if success:
-                    # 等待使用者在 csfsim 中操作讀卡機
-                    logger.info("健保署讀卡機控制軟體已啟動，請在其中讀取健保卡")
-                    
-                    # 由於我們無法直接從 csfsim 獲取資料，暫時拋出錯誤提示使用者
-                    # 在實際環境中，應該實作與 csfsim 的資料交換機制
-                    raise CardReaderError(
-                        "請在健保署讀卡機控制軟體中完成讀卡操作。\n\n"
-                        "操作步驟：\n"
-                        "1. 確認健保卡已正確插入讀卡機\n"
-                        "2. 在 csfsim 視窗中點擊讀取\n"
-                        "3. 完成後關閉 csfsim 視窗\n"
-                        "4. 回到本程式重新點擊讀取按鈕"
-                    )
-                else:
-                    # 啟動失敗 - 可能是安全模組檔案問題
-                    error_msg = (
-                        "健保署讀卡機控制軟體啟動失敗。\n\n"
-                        "常見問題解決方法：\n"
-                        "1. 檢查健保卡是否正確插入讀卡機\n"
-                        "2. 確認讀卡機電源已開啟\n"
-                        "3. 重新安裝健保署讀卡機控制軟體\n"
-                        "4. 以系統管理員身分執行本程式\n\n"
-                        "如果出現「安全模組檔目錄錯誤」：\n"
-                        "- 請聯繫 IT 部門重新設定健保署環境\n"
-                        "- 可能需要重新下載安全模組檔案"
-                    )
-                    raise CardReaderError(error_msg)
-            except Exception as e:
-                logger.error(f"使用健保署讀卡機控制軟體讀取健保卡失敗: {e}")
-                raise CardReaderError(f"讀取健保卡時發生錯誤: {e}")
-        
-        # 如果沒有找到 csfsim.exe
+            logger.info("csReadCard 失敗，嘗試使用 csfsim 作為備用方案")
+            raise CardReaderError(
+                "請使用健保署讀卡機控制軟體讀取健保卡。\n\n"
+                "操作步驟：\n"
+                "1. 確認健保卡已正確插入讀卡機\n"
+                "2. 開啟健保署讀卡機控制軟體\n"
+                "3. 在軟體中完成讀卡操作\n"
+                "4. 或切換到手工模式直接輸入資料"
+            )
         else:
             if self.offline_mode:
-                # 離線模式：簡化錯誤訊息
-                time.sleep(1)  # 模擬讀卡時間
-                logger.warning(f"離線模式：未找到健保署讀卡機控制軟體: {self.csfsim_path}")
                 raise CardReaderError(
-                    "未找到健保署讀卡機控制軟體。\n\n"
+                    "健保卡讀取失敗。\n\n"
                     "請聯繫 IT 部門確認軟體安裝狀態。"
                 )
             else:
-                # 一般模式：提供完整安裝指引
-                time.sleep(1)  # 模擬讀卡時間
-                logger.warning(f"未找到健保署讀卡機控制軟體: {self.csfsim_path}")
                 raise CardReaderError(
                     "健保卡讀取失敗：未找到健保署讀卡機控制軟體。\n\n"
                     "請聯繫 IT 部門確認：\n"
