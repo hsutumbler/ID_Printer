@@ -182,26 +182,23 @@ class PrintManager:
             c.drawString(start_x, y_pos, f"ID：{patient_data.get('id', 'N/A')}")
             y_pos -= uniform_spacing
             
-            # 姓名
+            # 姓名與生日同行
             c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
-            c.drawString(start_x, y_pos, f"姓名：{patient_data.get('name', 'N/A')}")
+            name_and_dob = f"姓名：{patient_data.get('name', 'N/A')}    {patient_data.get('dob', 'N/A')}"
+            c.drawString(start_x, y_pos, name_and_dob)
             y_pos -= uniform_spacing
-            
-            # 出生年月日
-            c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
-            c.drawString(start_x, y_pos, f"生日：{patient_data.get('dob', 'N/A')}")
-            y_pos -= uniform_spacing
-            
-            # 健保卡號(後四碼) - 只在有資料時顯示
-            card_no = patient_data.get('card_no', '')
-            if card_no:
-                c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
-                c.drawString(start_x, y_pos, f"健保卡號(後四碼)：{card_no}")
-                y_pos -= uniform_spacing
             
             # 列印時間
             c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
             c.drawString(start_x, y_pos, f"列印時間：{print_time}")
+            y_pos -= uniform_spacing
+            
+            # 備註 - 只在有內容時顯示
+            note = patient_data.get('note', '').strip()
+            if note:
+                c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
+                c.drawString(start_x, y_pos, f"備註：{note}")
+                y_pos -= uniform_spacing
 
             c.showPage()
             c.save()
@@ -222,17 +219,16 @@ class PrintManager:
             barcode_ascii = "|||||||||||  ||||||||||||  ||||||" if self.use_barcode else ""
             barcode_line = f"{barcode_ascii} (條碼)\n" if self.use_barcode else ""
             
-            # 健保卡號(後四碼) - 只在有資料時顯示
-            card_no = patient_data.get('card_no', '')
-            card_no_line = f"健保卡號(後四碼)：{card_no}\n" if card_no else ""
+            # 備註 - 只在有內容時顯示
+            note = patient_data.get('note', '').strip()
+            note_line = f"備註：{note}\n" if note else ""
             
             content = f"""
 ==========================================
 {barcode_line}ID：{patient_data.get('id', 'N/A')}
-姓名：{patient_data.get('name', 'N/A')}
-生日：{patient_data.get('dob', 'N/A')}
-{card_no_line}列印時間：{print_time}
-==========================================
+姓名：{patient_data.get('name', 'N/A')}    {patient_data.get('dob', 'N/A')}
+列印時間：{print_time}
+{note_line}==========================================
 """
             
             with open(filename, 'w', encoding='utf-8') as f:

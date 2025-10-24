@@ -13,9 +13,9 @@ class MedicalCardApp:
     def __init__(self, root, dll_path=None):
         self.root = root
         self.root.title("健保卡資料讀取與標籤列印系統 v1.0")
-        self.root.geometry("650x650")  # 調整視窗大小以適應頁籤
+        self.root.geometry("650x700")  # 增加視窗高度以適應新增的備註欄位
         self.root.resizable(True, True)  # 允許調整視窗大小
-        self.root.minsize(600, 600)  # 設定最小視窗大小
+        self.root.minsize(600, 650)  # 增加最小視窗高度
         
         # 設定全局字體為微軟正黑體
         self.default_font = "微軟正黑體"
@@ -179,6 +179,7 @@ class MedicalCardApp:
         self.patient_id_var = tk.StringVar()
         self.patient_name_var = tk.StringVar()
         self.patient_dob_var = tk.StringVar()
+        self.patient_note_var = tk.StringVar()
         self.card_no_var = tk.StringVar()
         
         # ID
@@ -211,6 +212,19 @@ class MedicalCardApp:
                                  width=20)
         self.dob_entry.pack(side='left', padx=5)
         ttk.Label(dob_frame, text="(格式: YYYY/MM/DD)", foreground="gray").pack(side='left', padx=5)
+        
+        # 備註
+        note_frame = ttk.Frame(patient_frame)
+        note_frame.pack(fill='x', pady=2)
+        ttk.Label(note_frame, text="備註:", width=12, anchor='w', 
+                 font=(self.default_font, 11, "bold")).pack(side='left')
+        self.note_entry = ttk.Entry(note_frame, textvariable=self.patient_note_var, 
+                                  font=(self.default_font, 13), width=20)
+        self.note_entry.pack(side='left', padx=5)
+        ttk.Label(note_frame, text="(限10字)", foreground="gray").pack(side='left', padx=5)
+        
+        # 綁定備註欄位的字數限制
+        self.patient_note_var.trace_add('write', self._on_note_change)
         
         # 健保卡號(後四碼)
         card_no_frame = ttk.Frame(patient_frame)
@@ -367,6 +381,7 @@ class MedicalCardApp:
             self.patient_id_var.set(processed_data["id"])
             self.patient_name_var.set(processed_data["name"])
             self.patient_dob_var.set(processed_data["dob"])
+            self.patient_note_var.set("")  # 讀卡後備註欄位清空，供使用者輸入
             self.card_no_var.set(processed_data.get("card_no", ""))
             
             # 根據離線模式設定不同的狀態訊息
@@ -433,6 +448,13 @@ class MedicalCardApp:
             self.read_button.config(state=tk.NORMAL)
         self.print_button.config(state=tk.DISABLED)
 
+    def _on_note_change(self, *args):
+        """當備註欄位變更時，限制字數"""
+        current_text = self.patient_note_var.get()
+        if len(current_text) > 10:
+            # 截斷到10字
+            self.patient_note_var.set(current_text[:10])
+
     def _on_data_change(self, *args):
         """當手動輸入的資料變更時"""
         if self.mode_var.get() == "manual":
@@ -447,6 +469,7 @@ class MedicalCardApp:
                     "id": id_value,
                     "name": name_value,
                     "dob": dob_value,
+                    "note": self.patient_note_var.get().strip(),
                     "read_time": datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
                 }
                 # 啟用列印按鈕
@@ -468,7 +491,9 @@ class MedicalCardApp:
                 messagebox.showwarning("列印錯誤", "請先讀取健保卡資料")
                 return
 
-            # 直接列印，不顯示確認對話框
+            # 準備列印資料，包含當前的備註內容
+            print_data = self.current_patient_data.copy()
+            print_data["note"] = self.patient_note_var.get().strip()
 
             # 開始列印
             self.status_text.set(f"標籤列印中... (共 {print_count} 張)")
@@ -478,7 +503,7 @@ class MedicalCardApp:
             logger.info(f"使用者點擊列印標籤按鈕，列印 {print_count} 張")
 
             # 執行列印
-            self.print_manager.print_labels(self.current_patient_data, print_count)
+            self.print_manager.print_labels(print_data, print_count)
             
             # 記錄列印事件
             print_time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
@@ -558,6 +583,8 @@ class MedicalCardApp:
         self.id_entry.configure(state=state)
         self.name_entry.configure(state=state)
         self.dob_entry.configure(state=state)
+        # 備註欄位在兩種模式下都可以輸入
+        self.note_entry.configure(state='normal')
         # 健保卡號欄位永遠保持唯讀狀態
         self.card_no_entry.configure(state='readonly')
 
@@ -567,6 +594,7 @@ class MedicalCardApp:
         self.patient_id_var.set("")
         self.patient_name_var.set("")
         self.patient_dob_var.set("")
+        self.patient_note_var.set("")
         self.card_no_var.set("")
         self.print_button.config(state=tk.DISABLED)
         logger.info("清除病人資料")
@@ -1151,6 +1179,7 @@ class MedicalCardApp:
                 self.patient_id_var.set(processed_data["id"])
                 self.patient_name_var.set(processed_data["name"])
                 self.patient_dob_var.set(processed_data["dob"])
+                self.patient_note_var.set("")  # 手工模式備註欄位清空，供使用者輸入
                 # 手工模式不顯示健保卡號
                 self.card_no_var.set("")
                 
