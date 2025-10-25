@@ -54,12 +54,12 @@ class NHICardDLL:
         try:
             config = configparser.ConfigParser()
             config.read('config.ini', encoding='utf-8')
-            com_port = config.getint('健保卡設定', 'com_port', fallback=1)
-            logger.info(f"讀卡機 COM 埠設定: COM{com_port}")
+            com_port = config.getint('健保卡設定', 'com_port', fallback=3)  # DLL 固定在 COMX3
+            logger.info(f"讀卡機 COM 埠設定: COM{com_port} (DLL 固定在 COMX3)")
             return com_port
         except Exception as e:
-            logger.warning(f"讀取 COM 埠設定失敗: {e}，使用預設值 COM1")
-            return 1
+            logger.warning(f"讀取 COM 埠設定失敗: {e}，使用預設值 COM3")
+            return 3
     
     def _get_default_dll_path(self):
         """取得預設的 DLL 路徑 - 優先使用健保署官方 DLL"""
@@ -146,8 +146,24 @@ class NHICardDLL:
                 self.dll = ctypes.CDLL(self.dll_path)
                 logger.info("使用標準健保署 DLL 函式簽名")
                 
-                # 設定標準健保署 DLL 函式簽名
+                # 設定標準健保署 DLL 函式簽名 (使用 cs 系列函式)
                 
+                # 開啟讀卡機連結埠
+                if hasattr(self.dll, 'csOpenCom'):
+                    self.dll.csOpenCom.argtypes = [c_int]  # COM 埠號
+                    self.dll.csOpenCom.restype = c_int
+                
+                # 關閉讀卡機連結埠
+                if hasattr(self.dll, 'csCloseCom'):
+                    self.dll.csCloseCom.argtypes = []
+                    self.dll.csCloseCom.restype = c_int
+                
+                # 讀取健保卡基本資料
+                if hasattr(self.dll, 'csReadCard'):
+                    self.dll.csReadCard.argtypes = [c_char_p]  # 緩衝區
+                    self.dll.csReadCard.restype = c_int
+                
+                # 備用：舊版函式簽名 (如果 cs 系列不存在)
                 # 初始化函式
                 if hasattr(self.dll, 'NHI_Initialize'):
                     self.dll.NHI_Initialize.argtypes = []
@@ -192,14 +208,22 @@ class NHICardDLL:
         if not self.initialized:
             raise NHICardDLLError("DLL 尚未載入")
         
-        if hasattr(self.dll, 'NHI_Initialize'):
+        # 優先使用 csOpenCom 函式
+        if hasattr(self.dll, 'csOpenCom'):
+            logger.info(f"使用 csOpenCom 開啟 COM{self.com_port}")
+            result = self.dll.csOpenCom(self.com_port)
+            if result != 0:  # 假設 0 表示成功
+                raise NHICardDLLError(f"開啟讀卡機連結埠失敗，錯誤碼: {result}")
+            logger.info("讀卡機連結埠開啟成功")
+            return True
+        elif hasattr(self.dll, 'NHI_Initialize'):
             result = self.dll.NHI_Initialize()
             if not result:
                 error = self.get_last_error()
                 raise NHICardDLLError(f"初始化讀卡機失敗: {error}")
             return True
         else:
-            logger.warning("DLL 中找不到 NHI_Initialize 函式")
+            logger.warning("DLL 中找不到 csOpenCom 或 NHI_Initialize 函式")
             return True  # 假設成功
     
     def read_card(self):
@@ -208,7 +232,11 @@ class NHICardDLL:
             raise NHICardDLLError("DLL 尚未載入")
         
         try:
-            if self.is_gnt_dll and self.com_object:
+            # 優先使用 csReadCard 函式
+            if hasattr(self.dll, 'csReadCard'):
+                logger.info("使用 csReadCard 讀取健保卡")
+                return self._read_card_with_csreadcard()
+            elif self.is_gnt_dll and self.com_object:
                 # 使用 GNT COM 介面讀取
                 return self._read_card_gnt_com()
             elif self.is_gnt_dll:
@@ -227,6 +255,132 @@ class NHICardDLL:
         finally:
             # 釋放資源
             self.release()
+    
+    def _read_card_with_csreadcard(self):
+        """使用 csReadCard 函式讀取健保卡"""
+        try:
+            # 建立緩衝區接收資料
+            buffer_size = 1024
+            buffer = create_string_buffer(buffer_size)
+            
+            # 呼叫 csReadCard
+            logger.info("呼叫 csReadCard 函式")
+            result = self.dll.csReadCard(buffer)
+            
+            if result == 0:  # 假設 0 表示成功
+                # 取得回傳的字串資料
+                raw_data = buffer.value.decode('big5', errors='ignore')
+                logger.info(f"csReadCard 回傳原始資料: {repr(raw_data)}")
+                
+                # 解析資料
+                parsed_data = self._parse_csreadcard_data(raw_data)
+                return parsed_data
+            else:
+                raise NHICardDLLError(f"csReadCard 執行失敗，錯誤碼: {result}")
+                
+        except Exception as e:
+            logger.error(f"csReadCard 呼叫失敗: {e}")
+            raise NHICardDLLError(f"csReadCard 呼叫失敗: {e}")
+    
+    def _parse_csreadcard_data(self, raw_data):
+        """解析 csReadCard 回傳的資料"""
+        try:
+            logger.info(f"開始解析 csReadCard 資料: {repr(raw_data)}")
+            
+            # 移除空白字符
+            data = raw_data.strip()
+            
+            if not data:
+                raise NHICardDLLError("csReadCard 回傳空資料")
+            
+            # 嘗試不同的解析方式
+            parsed_data = None
+            
+            # 方法1: 嘗試分隔符解析
+            for delimiter in ['|', ',', '\t', ';']:
+                if delimiter in data:
+                    parts = data.split(delimiter)
+                    if len(parts) >= 3:  # 至少要有身分證、姓名、出生日期
+                        parsed_data = self._parse_delimited_data(parts)
+                        logger.info(f"使用分隔符 '{delimiter}' 解析成功")
+                        break
+            
+            # 方法2: 如果沒有分隔符，嘗試固定長度解析
+            if not parsed_data:
+                parsed_data = self._parse_fixed_length_data(data)
+                logger.info("使用固定長度解析")
+            
+            # 方法3: 如果都失敗，嘗試正則表達式解析
+            if not parsed_data:
+                parsed_data = self._parse_regex_data(data)
+                logger.info("使用正則表達式解析")
+            
+            if not parsed_data:
+                raise NHICardDLLError("無法解析 csReadCard 回傳的資料格式")
+            
+            logger.info(f"解析結果: {parsed_data}")
+            return parsed_data
+            
+        except Exception as e:
+            logger.error(f"解析 csReadCard 資料失敗: {e}")
+            raise NHICardDLLError(f"解析健保卡資料失敗: {e}")
+    
+    def _parse_delimited_data(self, parts):
+        """解析分隔符格式的資料"""
+        try:
+            # 假設格式: 身分證|姓名|出生日期|性別|健保卡號
+            return {
+                "ID_NUMBER": parts[0].strip() if len(parts) > 0 else "",
+                "FULL_NAME": parts[1].strip() if len(parts) > 1 else "",
+                "BIRTH_DATE": parts[2].strip() if len(parts) > 2 else "",
+                "SEX": parts[3].strip() if len(parts) > 3 else "",
+                "CARD_NUMBER": parts[4].strip() if len(parts) > 4 else ""
+            }
+        except Exception as e:
+            logger.error(f"分隔符解析失敗: {e}")
+            return None
+    
+    def _parse_fixed_length_data(self, data):
+        """解析固定長度格式的資料"""
+        try:
+            # 假設格式: 身分證10位 + 姓名20位 + 出生日期8位 + 性別1位 + 健保卡號12位
+            if len(data) >= 38:  # 最少需要的長度
+                return {
+                    "ID_NUMBER": data[0:10].strip(),
+                    "FULL_NAME": data[10:30].strip(),
+                    "BIRTH_DATE": data[30:38].strip(),
+                    "SEX": data[38:39].strip() if len(data) > 38 else "",
+                    "CARD_NUMBER": data[39:51].strip() if len(data) > 50 else ""
+                }
+        except Exception as e:
+            logger.error(f"固定長度解析失敗: {e}")
+        return None
+    
+    def _parse_regex_data(self, data):
+        """使用正則表達式解析資料"""
+        try:
+            import re
+            
+            # 身分證字號模式 (1個英文字母 + 9個數字)
+            id_match = re.search(r'[A-Z]\d{9}', data)
+            
+            # 出生日期模式 (8個數字，可能是民國年或西元年)
+            birth_match = re.search(r'\d{7,8}', data)
+            
+            # 姓名模式 (中文字符)
+            name_match = re.search(r'[\u4e00-\u9fff]+', data)
+            
+            if id_match and name_match:
+                return {
+                    "ID_NUMBER": id_match.group(),
+                    "FULL_NAME": name_match.group(),
+                    "BIRTH_DATE": birth_match.group() if birth_match else "",
+                    "SEX": "",
+                    "CARD_NUMBER": ""
+                }
+        except Exception as e:
+            logger.error(f"正則表達式解析失敗: {e}")
+        return None
     
     def _read_card_gnt_com(self):
         """使用 GNT COM 介面讀取健保卡"""
@@ -374,9 +528,21 @@ class NHICardDLL:
     
     def release(self):
         """釋放資源"""
-        if self.initialized and hasattr(self.dll, 'NHI_Release'):
+        if self.initialized:
             try:
-                self.dll.NHI_Release()
+                # 優先使用 csCloseCom 函式
+                if hasattr(self.dll, 'csCloseCom'):
+                    logger.info("使用 csCloseCom 關閉讀卡機連結埠")
+                    result = self.dll.csCloseCom()
+                    if result == 0:
+                        logger.info("讀卡機連結埠關閉成功")
+                    else:
+                        logger.warning(f"關閉讀卡機連結埠失敗，錯誤碼: {result}")
+                elif hasattr(self.dll, 'NHI_Release'):
+                    self.dll.NHI_Release()
+                    logger.info("資源釋放成功")
+                else:
+                    logger.warning("DLL 中找不到 csCloseCom 或 NHI_Release 函式")
             except Exception as e:
                 logger.warning(f"釋放資源失敗: {e}")
 
