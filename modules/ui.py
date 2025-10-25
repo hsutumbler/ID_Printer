@@ -102,13 +102,16 @@ class MedicalCardApp:
         self.tab_control = ttk.Notebook(self.root)
         self.tab_control.pack(fill='both', expand=True, padx=5, pady=5)
         
+        # 綁定分頁切換事件
+        self.tab_control.bind("<<NotebookTabChanged>>", self.on_tab_changed)
+        
         # 主畫面頁籤
         main_tab = ttk.Frame(self.tab_control)
         self.tab_control.add(main_tab, text="主畫面")
         
         # 今日統計頁籤
-        stats_tab = ttk.Frame(self.tab_control)
-        self.tab_control.add(stats_tab, text="今日統計")
+        self.stats_tab = ttk.Frame(self.tab_control)
+        self.tab_control.add(self.stats_tab, text="今日統計")
         
         # ===== 主畫面頁籤內容 =====
         # 主標題
@@ -280,79 +283,136 @@ class MedicalCardApp:
         self.stats_text = tk.StringVar()
         
         # ===== 今日統計頁籤內容 =====
-        stats_main_frame = ttk.Frame(stats_tab, padding=20)
-        stats_main_frame.pack(fill='both', expand=True)
+        # 初始化統計頁面（將在第一次切換時建立內容）
+        self.stats_content_created = False
+        self.create_stats_content()
+        
+        # 版本號標籤 - 放在主視窗右下方
+        version_label = ttk.Label(self.root, text="v1_20251025", 
+                                 font=(self.default_font, 8, "underline"),
+                                 foreground="gray")
+        version_label.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
+
+    def on_tab_changed(self, event):
+        """分頁切換事件處理器"""
+        try:
+            # 取得當前選中的分頁索引
+            selected_tab = self.tab_control.select()
+            tab_index = self.tab_control.index(selected_tab)
+            
+            # 如果切換到統計頁面（索引為1），重新載入統計資料
+            if tab_index == 1:
+                logger.info("切換到統計頁面，重新載入資料")
+                self.refresh_stats_content()
+                
+        except Exception as e:
+            logger.warning(f"分頁切換事件處理失敗: {e}")
+
+    def create_stats_content(self):
+        """建立統計頁面內容"""
+        if self.stats_content_created:
+            return
+            
+        # 主框架
+        self.stats_main_frame = ttk.Frame(self.stats_tab, padding=20)
+        self.stats_main_frame.pack(fill='both', expand=True)
         
         # 統計標題
-        stats_title = ttk.Label(stats_main_frame, text="今日統計資訊", font=(self.default_font, 14, "bold"))
+        stats_title = ttk.Label(self.stats_main_frame, text="今日統計資訊", 
+                               font=(self.default_font, 14, "bold"))
         stats_title.pack(pady=(10, 20))
         
         # 顯示簡易統計資訊
-        stats_info_frame = ttk.LabelFrame(stats_main_frame, text="統計摘要", padding=15)
-        stats_info_frame.pack(fill='x', pady=10)
-        
-        # 更新統計資訊
-        self.update_statistics()
+        self.stats_info_frame = ttk.LabelFrame(self.stats_main_frame, text="統計摘要", padding=15)
+        self.stats_info_frame.pack(fill='x', pady=10)
         
         # 顯示統計資訊
-        stats_label = ttk.Label(stats_info_frame, textvariable=self.stats_text, 
-                               font=(self.default_font, 12))
-        stats_label.pack(pady=15)
+        self.stats_label = ttk.Label(self.stats_info_frame, textvariable=self.stats_text, 
+                                    font=(self.default_font, 12))
+        self.stats_label.pack(pady=15)
         
         # 詳細統計資訊區
-        details_frame = ttk.LabelFrame(stats_main_frame, text="詳細資訊", padding=15)
-        details_frame.pack(fill='both', expand=True, pady=15)
+        self.details_frame = ttk.LabelFrame(self.stats_main_frame, text="詳細資訊", padding=15)
+        self.details_frame.pack(fill='both', expand=True, pady=15)
         
-        # 取得統計資料
+        # 操作按鈕區
+        stats_button_frame = ttk.Frame(self.stats_main_frame)
+        stats_button_frame.pack(pady=15, fill='x')
+        
+        # 匯出完整資料按鈕
+        def export_complete_data():
+            self.export_today_complete_data()
+            
+        export_button = ttk.Button(stats_button_frame, text="匯出完整資料", 
+                                  command=export_complete_data, width=20)
+        export_button.pack(anchor='center', pady=10)
+        
+        self.stats_content_created = True
+        
+        # 初始載入資料
+        self.refresh_stats_content()
+
+    def refresh_stats_content(self):
+        """重新載入統計頁面內容"""
         try:
+            # 更新統計摘要
+            self.update_statistics()
+            
+            # 清除詳細資訊區的舊內容
+            for widget in self.details_frame.winfo_children():
+                widget.destroy()
+            
+            # 取得最新統計資料
             stats = self.record_manager.get_statistics()
             records = self.record_manager.get_today_records()
             
             # 建立表格式顯示
-            details_text = tk.Text(details_frame, wrap='word', height=10, width=60, 
-                                 font=(self.default_font, 10))
-            details_text.insert('1.0', f"今日讀取次數: {stats['total_reads']} 次\n")
-            details_text.insert('end', f"今日列印次數: {stats['total_prints']} 次\n")
-            details_text.insert('end', f"今日列印標籤: {stats['total_labels']} 張\n")
-            details_text.insert('end', f"今日總記錄數: {stats['total_records']} 筆\n\n")
+            details_text = tk.Text(self.details_frame, wrap='word', height=15, width=80, 
+                                 font=(self.default_font, 9))
             
-            details_text.insert('end', "最近記錄:\n")
-            recent_records = records[-5:] if len(records) > 5 else records
-            for i, record in enumerate(reversed(recent_records), 1):
-                details_text.insert('end', f"{i}. {record.get('時間戳記', '')} - {record.get('姓名', '')} - {record.get('操作類型', '')}\n")
+            # 顯示統計摘要
+            details_text.insert('1.0', "=== 今日統計摘要 ===\n")
+            details_text.insert('end', f"讀取次數: {stats['total_reads']} 次\n")
+            details_text.insert('end', f"列印次數: {stats['total_prints']} 次\n")
+            details_text.insert('end', f"列印標籤: {stats['total_labels']} 張\n")
+            details_text.insert('end', f"總記錄數: {stats['total_records']} 筆\n\n")
+            
+            # 顯示完整記錄
+            details_text.insert('end', "=== 完整記錄 ===\n")
+            if records:
+                # 表頭 - 按照新的排序：序號、ID、姓名、生日、列印時間、備註
+                details_text.insert('end', f"{'序號':<4} {'ID':<12} {'姓名':<8} {'生日':<12} {'列印時間':<18} {'備註':<10}\n")
+                details_text.insert('end', "-" * 74 + "\n")
+                
+                # 記錄內容
+                for i, record in enumerate(records, 1):
+                    id_str = record.get('身分證字號', '')[:10]
+                    name_str = record.get('姓名', '')[:6]
+                    dob_str = record.get('出生年月日', '')[:10]
+                    time_str = record.get('時間戳記', '')[:16]  # 顯示到分鐘
+                    note_str = record.get('備註', '')[:8]
+                    
+                    # 按照新的排序顯示
+                    details_text.insert('end', f"{i:<4} {id_str:<12} {name_str:<8} {dob_str:<12} {time_str:<18} {note_str:<10}\n")
+            else:
+                details_text.insert('end', "今日尚無記錄\n")
                 
             details_text.config(state='disabled')  # 設為唯讀
             
-            scrollbar = ttk.Scrollbar(details_frame, orient='vertical', command=details_text.yview)
+            # 建立捲軸
+            scrollbar = ttk.Scrollbar(self.details_frame, orient='vertical', command=details_text.yview)
             details_text.configure(yscrollcommand=scrollbar.set)
             
             details_text.pack(side='left', fill='both', expand=True)
             scrollbar.pack(side='right', fill='y')
             
+            logger.info(f"統計頁面已更新，共 {len(records)} 筆記錄")
+            
         except Exception as e:
-            error_label = ttk.Label(details_frame, text=f"載入統計資料失敗: {e}", 
+            logger.error(f"重新載入統計內容失敗: {e}")
+            error_label = ttk.Label(self.details_frame, text=f"載入統計資料失敗: {e}", 
                                   foreground="red", font=(self.default_font, 10))
             error_label.pack(pady=20)
-        
-        # 操作按鈕區
-        stats_button_frame = ttk.Frame(stats_main_frame)
-        stats_button_frame.pack(pady=15, fill='x')
-        
-        # 查看詳細統計按鈕
-        view_button = ttk.Button(stats_button_frame, text="查看完整統計", 
-                               command=self.show_statistics, width=20)
-        view_button.pack(side='left', padx=10)
-        
-        # 匯出按鈕
-        def export_stats():
-            # 直接調用 show_statistics 中的匯出功能
-            self.show_statistics(auto_export=True)
-            
-        export_button = ttk.Button(stats_button_frame, text="匯出統計資料", 
-                                  command=export_stats, width=20)
-        export_button.pack(side='right', padx=10)
-        
-
 
     def start_read_card(self):
         """開始讀取健保卡"""
@@ -509,7 +569,7 @@ class MedicalCardApp:
             print_time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
             try:
                 self.record_manager.log_operation(
-                    self.current_patient_data, 
+                    print_data,  # 使用包含備註的完整列印資料
                     print_time, 
                     print_count, 
                     "列印"
@@ -769,6 +829,63 @@ class MedicalCardApp:
         except Exception as e:
             self.stats_text.set("統計資訊載入失敗")
             logger.warning(f"更新統計失敗: {e}")
+
+    def export_today_complete_data(self):
+        """匯出今日完整資料為 CSV 檔案"""
+        try:
+            from tkinter import filedialog
+            import csv
+            import datetime
+            
+            # 取得今日記錄
+            records = self.record_manager.get_today_records()
+            
+            if not records:
+                messagebox.showinfo("匯出資料", "今日尚無記錄可匯出")
+                return
+            
+            # 取得當前日期作為預設檔名
+            today_str = datetime.datetime.now().strftime("%Y%m%d")
+            default_filename = f"健保卡標籤完整資料_{today_str}.csv"
+            
+            # 詢問儲存位置
+            file_path = filedialog.asksaveasfilename(
+                initialfile=default_filename,
+                defaultextension=".csv",
+                filetypes=[("CSV 檔案", "*.csv"), ("所有檔案", "*.*")]
+            )
+            
+            if not file_path:
+                return  # 使用者取消
+            
+            # 寫入 CSV 檔案
+            with open(file_path, 'w', newline='', encoding='utf-8-sig') as f:
+                writer = csv.writer(f)
+                
+                # 寫入標題列
+                headers = ["ID", "姓名", "生日", "列印時間", "備註", "健保卡號", "操作類型", "列印張數"]
+                writer.writerow(headers)
+                
+                # 寫入資料列
+                for record in records:
+                    row = [
+                        record.get('身分證字號', ''),
+                        record.get('姓名', ''),
+                        record.get('出生年月日', ''),
+                        record.get('時間戳記', ''),
+                        record.get('備註', ''),
+                        record.get('健保卡號', ''),
+                        record.get('操作類型', ''),
+                        record.get('列印張數', '')
+                    ]
+                    writer.writerow(row)
+            
+            messagebox.showinfo("匯出成功", f"已成功匯出 {len(records)} 筆記錄至:\n{file_path}")
+            logger.info(f"使用者匯出完整資料: {file_path}, 共 {len(records)} 筆記錄")
+            
+        except Exception as e:
+            messagebox.showerror("匯出錯誤", f"匯出 CSV 檔案失敗:\n{e}")
+            logger.error(f"匯出完整資料失敗: {e}")
 
 
 

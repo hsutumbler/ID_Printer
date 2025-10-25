@@ -10,15 +10,29 @@ import io
 from .logger import logger
 
 try:
+    # 修正 reportlab 與新版 Python 的相容性問題
+    import hashlib
+    # 如果 hashlib 沒有 usedforsecurity 參數支援，添加相容性處理
+    if not hasattr(hashlib, '_usedforsecurity_supported'):
+        original_md5 = hashlib.md5
+        def patched_md5(*args, **kwargs):
+            kwargs.pop('usedforsecurity', None)
+            return original_md5(*args, **kwargs)
+        hashlib.md5 = patched_md5
+    
     from reportlab.lib.pagesizes import letter, A4
     from reportlab.lib.units import mm
     from reportlab.pdfgen import canvas
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
     REPORTLAB_AVAILABLE = True
+    logger.info("ReportLab 載入成功，已修正相容性問題")
 except ImportError:
     REPORTLAB_AVAILABLE = False
     logger.warning("ReportLab 未安裝，將使用簡單文字檔案列印")
+except Exception as e:
+    REPORTLAB_AVAILABLE = False
+    logger.error(f"ReportLab 載入失敗: {e}，將使用簡單文字檔案列印")
 
 # 嘗試匯入條碼生成套件
 try:
@@ -127,6 +141,7 @@ class PrintManager:
             raise PrintManagerError("ReportLab 未安裝，無法生成 PDF")
             
         try:
+            logger.info(f"開始生成 PDF 標籤: {filename}")
             c = canvas.Canvas(filename, pagesize=(self.label_width, self.label_height))
             
             # 獲取當前列印時間
@@ -287,14 +302,23 @@ class PrintManager:
             try:
                 for i in range(count):
                     # 建立臨時檔案
+                    pdf_failed = False
                     if self.print_mode.lower() == 'pdf' and REPORTLAB_AVAILABLE:
-                        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-                        temp_file.close()
-                        self._generate_label_pdf(patient_data, temp_file.name)
-                    else:
+                        try:
+                            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+                            temp_file.close()
+                            self._generate_label_pdf(patient_data, temp_file.name)
+                            logger.info(f"PDF 標籤生成成功: {temp_file.name}")
+                        except Exception as e:
+                            logger.warning(f"PDF 生成失敗，自動切換到文字模式: {e}")
+                            pdf_failed = True
+                    
+                    # 如果 PDF 失敗或不可用，使用文字模式
+                    if not (self.print_mode.lower() == 'pdf' and REPORTLAB_AVAILABLE) or pdf_failed:
                         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode='w', encoding='utf-8')
                         temp_file.close()
                         self._generate_label_text(patient_data, temp_file.name)
+                        logger.info(f"文字標籤生成成功: {temp_file.name}")
                     
                     temp_files.append(temp_file.name)
                     
