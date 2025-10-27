@@ -194,6 +194,7 @@ class MedicalCardApp:
                                 font=(self.default_font, 13), state='readonly',
                                 width=20)
         self.id_entry.pack(side='left', padx=5)
+        ttk.Label(id_frame, text="(身分證字號)", foreground="gray").pack(side='left', padx=5)
         
         # 姓名
         name_frame = ttk.Frame(patient_frame)
@@ -214,7 +215,7 @@ class MedicalCardApp:
                                  font=(self.default_font, 13), state='readonly',
                                  width=20)
         self.dob_entry.pack(side='left', padx=5)
-        ttk.Label(dob_frame, text="(格式: YYYY/MM/DD)", foreground="gray").pack(side='left', padx=5)
+        ttk.Label(dob_frame, text="(民國年YYY/MM/DD)", foreground="gray").pack(side='left', padx=5)
         
         # 備註
         note_frame = ttk.Frame(patient_frame)
@@ -1242,6 +1243,7 @@ class MedicalCardApp:
         id_var = tk.StringVar()
         id_entry = ttk.Entry(input_frame, textvariable=id_var, width=20)
         id_entry.grid(row=0, column=1, sticky='ew', pady=5, padx=5)
+        ttk.Label(input_frame, text="(身分證字號)", foreground="gray").grid(row=0, column=2, sticky='w', pady=5, padx=5)
         
         # 姓名
         ttk.Label(input_frame, text="姓名:", width=12, anchor='w').grid(row=1, column=0, sticky='w', pady=5)
@@ -1254,7 +1256,7 @@ class MedicalCardApp:
         dob_var = tk.StringVar()
         dob_entry = ttk.Entry(input_frame, textvariable=dob_var, width=20)
         dob_entry.grid(row=2, column=1, sticky='ew', pady=5, padx=5)
-        ttk.Label(input_frame, text="(格式: YYYY/MM/DD)", foreground="gray").grid(row=2, column=2, sticky='w', pady=5, padx=5)
+        ttk.Label(input_frame, text="(民國年YYY/MM/DD)", foreground="gray").grid(row=2, column=2, sticky='w', pady=5, padx=5)
         
         # 設定欄位權重
         input_frame.columnconfigure(1, weight=1)
