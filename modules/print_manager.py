@@ -186,8 +186,8 @@ class PrintManager:
                     except:
                         pass
                     
-                    # 移動到條碼下方（加寬與 ID 之間的間距 0.5mm）
-                    y_pos -= barcode_height + 2.5 * mm
+                    # 移動到條碼下方（條碼本身帶一行文字，再加上一行間距）
+                    y_pos -= barcode_height + font_size + 2.5 * mm
             
             # 設定統一的行距
             uniform_spacing = line_height + 0.5 * mm
@@ -256,6 +256,148 @@ class PrintManager:
             logger.error(f"生成文字標籤失敗: {e}")
             raise PrintManagerError(f"生成文字標籤失敗: {e}")
 
+    def _generate_zpl_content(self, patient_data):
+        """生成 ZPL 內容 (不寫入檔案)"""
+        try:
+            print_time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M")
+            patient_id = patient_data.get('id', 'N/A')
+            
+            # ZPL 指令開始
+            zpl_content = "^XA\n"  # 開始標籤格式
+            
+            # 設定標籤尺寸 (以點為單位，203 DPI)
+            # 50mm = 394點, 35mm = 276點
+            zpl_content += "^PW394\n"  # 設定標籤寬度
+            zpl_content += "^LL276\n"  # 設定標籤長度
+            
+            y_pos = 30  # 起始Y位置
+            
+            # 條碼 (如果啟用)
+            if self.use_barcode:
+                # Code 128 條碼，高度50點
+                zpl_content += f"^FO30,{y_pos}^BY2^BCN,50,Y,N,N^FD{patient_id}^FS\n"
+                y_pos += 70 + 12  # 條碼後移動位置（條碼本身帶一行文字，再加一行間距約12點）
+            
+            # ID (身分證字號)
+            zpl_content += f"^FO30,{y_pos}^A0N,20,20^FDID：{patient_id}^FS\n"
+            y_pos += 30
+            
+            # 姓名與生日同行
+            patient_name = patient_data.get('name', 'N/A')
+            dob = patient_data.get('dob', 'N/A')
+            name_and_dob = f"姓名：{patient_name}  {dob}"
+            zpl_content += f"^FO30,{y_pos}^A0N,20,20^FD{name_and_dob}^FS\n"
+            y_pos += 30
+            
+            # 列印時間
+            zpl_content += f"^FO30,{y_pos}^A0N,18,18^FD列印時間：{print_time}^FS\n"
+            y_pos += 25
+            
+            # 備註 (如果有)
+            note = patient_data.get('note', '').strip()
+            if note:
+                zpl_content += f"^FO30,{y_pos}^A0N,18,18^FD備註: {note}^FS\n"
+            
+            # ZPL 指令結束
+            zpl_content += "^XZ\n"
+            
+            return zpl_content
+            
+        except Exception as e:
+            logger.error(f"生成 ZPL 內容失敗: {e}")
+            raise PrintManagerError(f"生成 ZPL 內容失敗: {e}")
+
+    def _generate_label_zpl(self, patient_data, filename):
+        """生成 ZPL 標籤檔案 (向後相容)"""
+        try:
+            zpl_content = self._generate_zpl_content(patient_data)
+            
+            # 寫入 ZPL 檔案
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(zpl_content)
+            
+            logger.info(f"生成 ZPL 標籤: {filename}")
+            return filename
+            
+        except Exception as e:
+            logger.error(f"生成 ZPL 標籤失敗: {e}")
+            raise PrintManagerError(f"生成 ZPL 標籤失敗: {e}")
+
+    def _send_zpl_to_printer(self, zpl_content):
+        """直接發送 ZPL 內容到 Zebra 印表機"""
+        try:
+            system = platform.system()
+            
+            if system == "Windows":
+                # Windows 系統：使用 win32print 發送原始 ZPL 資料到印表機
+                try:
+                    import win32print
+                    import win32api
+                    
+                    # 取得預設印表機
+                    printer_name = win32print.GetDefaultPrinter()
+                    logger.info(f"使用預設印表機: {printer_name}")
+                    
+                    # 開啟印表機
+                    printer_handle = win32print.OpenPrinter(printer_name)
+                    
+                    try:
+                        # 開始列印工作
+                        job_info = ("ZPL Label", None, "RAW")
+                        job_id = win32print.StartDocPrinter(printer_handle, 1, job_info)
+                        win32print.StartPagePrinter(printer_handle)
+                        
+                        # 發送 ZPL 資料
+                        win32print.WritePrinter(printer_handle, zpl_content.encode('utf-8'))
+                        
+                        # 結束列印
+                        win32print.EndPagePrinter(printer_handle)
+                        win32print.EndDocPrinter(printer_handle)
+                        
+                        logger.info(f"ZPL 已直接發送到印表機: {printer_name}")
+                        
+                    finally:
+                        win32print.ClosePrinter(printer_handle)
+                        
+                except ImportError:
+                    logger.warning("win32print 未安裝，改用檔案方式列印")
+                    # 備用方案：建立臨時檔案並發送到印表機
+                    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.zpl', delete=False, encoding='utf-8')
+                    temp_file.write(zpl_content)
+                    temp_file.close()
+                    
+                    os.startfile(temp_file.name, "print")
+                    logger.info(f"ZPL 透過檔案發送到印表機: {temp_file.name}")
+                    
+                    # 延遲刪除臨時檔案
+                    import threading
+                    def cleanup():
+                        import time
+                        time.sleep(5)
+                        try:
+                            os.remove(temp_file.name)
+                        except:
+                            pass
+                    threading.Thread(target=cleanup).start()
+                    
+                except Exception as e:
+                    logger.error(f"直接列印 ZPL 失敗: {e}")
+                    raise PrintManagerError(f"直接列印 ZPL 失敗: {e}")
+            else:
+                # 非 Windows 系統：使用 lpr 命令
+                try:
+                    import subprocess
+                    process = subprocess.Popen(['lpr', '-o', 'raw'], stdin=subprocess.PIPE)
+                    process.communicate(input=zpl_content.encode('utf-8'))
+                    logger.info("ZPL 已透過 lpr 發送到印表機")
+                except Exception as e:
+                    logger.error(f"lpr 列印失敗: {e}")
+                    raise PrintManagerError(f"lpr 列印失敗: {e}")
+                    
+        except Exception as e:
+            logger.error(f"發送 ZPL 到印表機失敗: {e}")
+            raise PrintManagerError(f"發送 ZPL 到印表機失敗: {e}")
+
     def _send_to_printer(self, filename):
         """發送檔案到印表機"""
         try:
@@ -289,47 +431,67 @@ class PrintManager:
             raise PrintManagerError(f"發送到印表機失敗: {e}")
 
 
-    def print_labels(self, patient_data, count):
-        """列印多張標籤 - 支援 PDF 和文字檔模式"""
+    def print_labels(self, patient_data, count, printer_mode=None):
+        """列印多張標籤 - 支援 PDF、ZPL 和文字檔模式"""
         if count <= 0:
             raise PrintManagerError("列印張數必須大於 0")
+        
+        # 如果沒有指定 printer_mode，使用配置檔案的設定
+        if printer_mode is None:
+            printer_mode = "pdf" if self.print_mode.lower() == 'pdf' else "text"
             
-        logger.info(f"開始列印標籤，病人: {patient_data.get('name')}, 張數: {count}, 模式: {self.print_mode}")
+        logger.info(f"開始列印標籤，病人: {patient_data.get('name')}, 張數: {count}, 模式: {printer_mode}")
         
         try:
-            # PDF 或文字檔模式
+            # 根據模式選擇生成方法
             temp_files = []
             try:
                 for i in range(count):
-                    # 建立臨時檔案
-                    pdf_failed = False
-                    if self.print_mode.lower() == 'pdf' and REPORTLAB_AVAILABLE:
-                        try:
-                            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-                            temp_file.close()
-                            self._generate_label_pdf(patient_data, temp_file.name)
-                            logger.info(f"PDF 標籤生成成功: {temp_file.name}")
-                        except Exception as e:
-                            logger.warning(f"PDF 生成失敗，自動切換到文字模式: {e}")
+                    # 根據 printer_mode 選擇生成方法
+                    if printer_mode == "zpl":
+                        # ZPL 模式：直接生成 ZPL 內容並發送到印表機
+                        zpl_content = self._generate_zpl_content(patient_data)
+                        self._send_zpl_to_printer(zpl_content)
+                        logger.info(f"ZPL 標籤已直接發送到印表機")
+                    elif printer_mode == "pdf":
+                        # PDF 模式
+                        pdf_failed = False
+                        if REPORTLAB_AVAILABLE:
+                            try:
+                                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+                                temp_file.close()
+                                self._generate_label_pdf(patient_data, temp_file.name)
+                                logger.info(f"PDF 標籤生成成功: {temp_file.name}")
+                            except Exception as e:
+                                logger.warning(f"PDF 生成失敗，自動切換到文字模式: {e}")
+                                pdf_failed = True
+                        else:
                             pdf_failed = True
-                    
-                    # 如果 PDF 失敗或不可用，使用文字模式
-                    if not (self.print_mode.lower() == 'pdf' and REPORTLAB_AVAILABLE) or pdf_failed:
+                        
+                        # 如果 PDF 失敗，使用文字模式
+                        if pdf_failed:
+                            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode='w', encoding='utf-8')
+                            temp_file.close()
+                            self._generate_label_text(patient_data, temp_file.name)
+                            logger.info(f"文字標籤生成成功: {temp_file.name}")
+                    else:
+                        # 文字模式 (備用)
                         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode='w', encoding='utf-8')
                         temp_file.close()
                         self._generate_label_text(patient_data, temp_file.name)
                         logger.info(f"文字標籤生成成功: {temp_file.name}")
                     
-                    temp_files.append(temp_file.name)
-                    
-                    # 發送到印表機
-                    self._send_to_printer(temp_file.name)
+                    # 只有非 ZPL 模式才需要處理檔案
+                    if printer_mode != "zpl":
+                        temp_files.append(temp_file.name)
+                        # 發送到印表機
+                        self._send_to_printer(temp_file.name)
                     
                     # 給印表機一些處理時間
                     if i < count - 1:  # 最後一張不需要等待
                         time.sleep(1)
                 
-                logger.info(f"成功透過 {self.print_mode.upper()} 列印 {count} 張標籤")
+                logger.info(f"成功透過 {printer_mode.upper()} 列印 {count} 張標籤")
                 return True
                 
             finally:
@@ -346,7 +508,7 @@ class PrintManager:
             logger.error(f"列印失敗: {e}")
             raise PrintManagerError(f"列印失敗: {e}")
 
-    def test_printer(self):
+    def test_printer(self, printer_mode="pdf"):
         """測試印表機連線"""
         try:
             test_data = {
@@ -355,8 +517,12 @@ class PrintManager:
                 "dob": "1990/01/01"
             }
             
-            # 測試 PDF 或文字檔模式
-            if self.print_mode.lower() == 'pdf' and REPORTLAB_AVAILABLE:
+            # 根據模式測試
+            if printer_mode == "zpl":
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".zpl")
+                temp_file.close()
+                self._generate_label_zpl(test_data, temp_file.name)
+            elif printer_mode == "pdf" and REPORTLAB_AVAILABLE:
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
                 temp_file.close()
                 self._generate_label_pdf(test_data, temp_file.name)
@@ -365,7 +531,7 @@ class PrintManager:
                 temp_file.close()
                 self._generate_label_text(test_data, temp_file.name)
             
-            logger.info(f"{self.print_mode.upper()} 印表機測試完成")
+            logger.info(f"{printer_mode.upper()} 印表機測試完成")
             return True, temp_file.name
             
         except Exception as e:

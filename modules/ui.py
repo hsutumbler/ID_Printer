@@ -13,9 +13,9 @@ class MedicalCardApp:
     def __init__(self, root, dll_path=None):
         self.root = root
         self.root.title("健保卡資料讀取與標籤列印系統 v1.0")
-        self.root.geometry("650x700")  # 增加視窗高度以適應新增的備註欄位
+        self.root.geometry("650x750")  # 增加視窗高度以適應標籤機選擇功能
         self.root.resizable(True, True)  # 允許調整視窗大小
-        self.root.minsize(600, 650)  # 增加最小視窗高度
+        self.root.minsize(600, 700)  # 增加最小視窗高度
         
         # 設定全局字體為微軟正黑體
         self.default_font = "微軟正黑體"
@@ -255,25 +255,46 @@ class MedicalCardApp:
         count_spinbox.pack(side='left', padx=5)
         ttk.Label(count_frame, text="張 (最多10張)").pack(side='left')
         
+        # 標籤機模式選擇區
+        printer_mode_frame = ttk.Frame(print_frame)
+        printer_mode_frame.pack(fill='x', pady=(15, 5))
+        
+        # 建立標籤機模式選擇的單選按鈕
+        self.printer_mode_var = tk.StringVar(value="pdf")  # 預設為PDF模式
+        
+        # 使用 Frame 來水平排列單選按鈕
+        mode_button_frame = ttk.Frame(printer_mode_frame)
+        mode_button_frame.pack(fill='x', pady=5)
+        
+        # 大標籤機(ZPL模式)單選按鈕
+        zpl_radio = ttk.Radiobutton(mode_button_frame, text="大標籤機(ZPL模式)", 
+                                   variable=self.printer_mode_var, value="zpl")
+        zpl_radio.pack(side='left', padx=20)
+        
+        # 小標籤機(PDF模式)單選按鈕
+        pdf_radio = ttk.Radiobutton(mode_button_frame, text="小標籤機(PDF模式)", 
+                                   variable=self.printer_mode_var, value="pdf")
+        pdf_radio.pack(side='left', padx=20)
+        
         # 主要按鈕區
         button_frame = ttk.Frame(main_tab)
-        button_frame.pack(pady=20)
+        button_frame.pack(pady=25)
         
         # 讀取健保卡按鈕
         self.read_button = ttk.Button(button_frame, text="讀取健保卡", 
                                      command=self.start_read_card, width=15)
-        self.read_button.pack(side='left', padx=10)
+        self.read_button.pack(side='left', padx=12, pady=8)
         
         # 列印標籤按鈕
         self.print_button = ttk.Button(button_frame, text="列印標籤", 
                                       command=self.print_labels, width=15, 
                                       state=tk.DISABLED)
-        self.print_button.pack(side='left', padx=10)
+        self.print_button.pack(side='left', padx=12, pady=8)
         
         # 清除資料按鈕
         clear_button = ttk.Button(button_frame, text="清除資料", 
                                  command=self.clear_data, width=15)
-        clear_button.pack(side='left', padx=10)
+        clear_button.pack(side='left', padx=12, pady=8)
 
         # 綁定輸入欄位的變更事件
         self.patient_id_var.trace_add('write', self._on_data_change)
@@ -556,15 +577,18 @@ class MedicalCardApp:
             print_data = self.current_patient_data.copy()
             print_data["note"] = self.patient_note_var.get().strip()
 
+            # 取得選擇的標籤機模式
+            printer_mode = self.printer_mode_var.get()
+
             # 開始列印
-            self.status_text.set(f"標籤列印中... (共 {print_count} 張)")
+            self.status_text.set(f"標籤列印中... (共 {print_count} 張，{'ZPL' if printer_mode == 'zpl' else 'PDF'}模式)")
             self.print_button.config(state=tk.DISABLED)
             self.read_button.config(state=tk.DISABLED)
             
-            logger.info(f"使用者點擊列印標籤按鈕，列印 {print_count} 張")
+            logger.info(f"使用者點擊列印標籤按鈕，列印 {print_count} 張，模式: {printer_mode}")
 
             # 執行列印
-            self.print_manager.print_labels(print_data, print_count)
+            self.print_manager.print_labels(print_data, print_count, printer_mode)
             
             # 記錄列印事件
             print_time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
