@@ -265,6 +265,9 @@ class PrintManager:
             # ZPL 指令開始
             zpl_content = "^XA\n"  # 開始標籤格式
             
+            # 設定字符編碼為 UTF-8（支援中文）
+            zpl_content += "^CI28\n"  # UTF-8 編碼
+            
             # 設定標籤尺寸 (以點為單位，203 DPI)
             # 50mm = 394點, 35mm = 276點
             zpl_content += "^PW394\n"  # 設定標籤寬度
@@ -279,24 +282,24 @@ class PrintManager:
                 y_pos += 70 + 12  # 條碼後移動位置（條碼本身帶一行文字，再加一行間距約12點）
             
             # ID (身分證字號)
-            zpl_content += f"^FO30,{y_pos}^A0N,20,20^FDID：{patient_id}^FS\n"
-            y_pos += 30
+            zpl_content += f"^FO30,{y_pos}^A0N,22,22^FDID：{patient_id}^FS\n"
+            y_pos += 35
             
             # 姓名與生日同行
             patient_name = patient_data.get('name', 'N/A')
             dob = patient_data.get('dob', 'N/A')
             name_and_dob = f"姓名：{patient_name}  {dob}"
-            zpl_content += f"^FO30,{y_pos}^A0N,20,20^FD{name_and_dob}^FS\n"
-            y_pos += 30
+            zpl_content += f"^FO30,{y_pos}^A0N,22,22^FD{name_and_dob}^FS\n"
+            y_pos += 35
             
             # 列印時間
-            zpl_content += f"^FO30,{y_pos}^A0N,18,18^FD列印時間：{print_time}^FS\n"
-            y_pos += 25
+            zpl_content += f"^FO30,{y_pos}^A0N,22,22^FD列印時間：{print_time}^FS\n"
+            y_pos += 35
             
             # 備註 (如果有)
             note = patient_data.get('note', '').strip()
             if note:
-                zpl_content += f"^FO30,{y_pos}^A0N,18,18^FD備註: {note}^FS\n"
+                zpl_content += f"^FO30,{y_pos}^A0N,22,22^FD備註: {note}^FS\n"
             
             # ZPL 指令結束
             zpl_content += "^XZ\n"
