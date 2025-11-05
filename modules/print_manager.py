@@ -38,10 +38,63 @@ except Exception as e:
 try:
     import barcode
     from barcode.writer import ImageWriter
-    from PIL import Image
+    from PIL import Image, ImageDraw, ImageFont
+    
+    # 修正 Pillow 10.0+ 版本相容性：添加 getsize() 方法到 FreeTypeFont
+    # 新版本 Pillow (10.0+) 移除了 getsize()，改用 getbbox() 或 textbbox()
+    # python-barcode 套件仍在使用舊的 getsize() API
+    try:
+        # 定義 getsize() 修補方法
+        def _patched_getsize(self, text, direction=None):
+            """為 FreeTypeFont 添加 getsize() 方法相容性修補"""
+            try:
+                # 優先使用 getbbox() (Pillow 10.0+ 推薦方法)
+                if hasattr(self, 'getbbox'):
+                    bbox = self.getbbox(text)
+                    if bbox and len(bbox) >= 4:
+                        return (bbox[2] - bbox[0], bbox[3] - bbox[1])
+                # 備用：使用 textbbox() (需要提供起始位置)
+                elif hasattr(self, 'textbbox'):
+                    bbox = self.textbbox((0, 0), text)
+                    if bbox and len(bbox) >= 4:
+                        return (bbox[2] - bbox[0], bbox[3] - bbox[1])
+            except Exception as e:
+                logger.debug(f"getsize() 修補方法執行失敗: {e}")
+            return (0, 0)
+        
+        # 為 FreeTypeFont 類別添加 getsize 方法（如果不存在）
+        if hasattr(ImageFont, 'FreeTypeFont'):
+            if not hasattr(ImageFont.FreeTypeFont, 'getsize'):
+                ImageFont.FreeTypeFont.getsize = _patched_getsize
+                logger.debug("已為 FreeTypeFont 添加 getsize() 相容性修補")
+        
+        # 也為 ImageFont 基類添加（如果存在）
+        if hasattr(ImageFont, 'ImageFont') and not hasattr(ImageFont.ImageFont, 'getsize'):
+            ImageFont.ImageFont.getsize = _patched_getsize
+            logger.debug("已為 ImageFont 基類添加 getsize() 相容性修補")
+            
+    except Exception as e:
+        logger.warning(f"字型相容性修補失敗: {e}")
+    
+    # 強制匯入條碼子模組，確保 PyInstaller 打包時包含它們
+    # 使用正確的匯入方式：barcode.code128 而不是 from barcode import code128
+    try:
+        import barcode.code128
+        import barcode.code39
+        import barcode.ean13
+        import barcode.ean8
+        from barcode.writer import base
+        from barcode.writer import image as writer_image
+        from barcode.writer import svg
+        logger.debug("條碼子模組匯入成功")
+    except ImportError as e:
+        logger.warning(f"部分條碼子模組匯入失敗（可能不影響功能）: {e}")
+    
     BARCODE_AVAILABLE = True
+    IMAGE_AVAILABLE = True
 except ImportError:
     BARCODE_AVAILABLE = False
+    IMAGE_AVAILABLE = False
     logger.warning("python-barcode 未安裝，將使用文字模擬條碼")
 
 class PrintManagerError(Exception):
@@ -82,57 +135,320 @@ class PrintManager:
         if REPORTLAB_AVAILABLE:
             self._try_register_chinese_font()
         
+        # ZPL 圖形模式設定
+        self.zpl_chinese_font_path = None
+        self.zpl_chinese_font_size = 22  # 點數，與 ZPL 字型大小對應
+        self.zpl_fixed_graphics = {}  # 儲存固定文字的預定義圖形
+        if IMAGE_AVAILABLE:
+            self._load_chinese_font_for_zpl()
+            self._generate_fixed_graphics()  # 生成固定文字的預定義圖形
+        
+        # 預先載入條碼類別，確保 PyInstaller 打包時包含必要的模組
+        if BARCODE_AVAILABLE and self.use_barcode:
+            try:
+                # 預先載入常用的條碼類別，確保打包時包含
+                _ = barcode.get_barcode_class('code128')
+                _ = barcode.get_barcode_class('code39')
+                logger.debug("條碼類別預載入成功")
+            except Exception as e:
+                logger.warning(f"條碼類別預載入失敗: {e}")
+        
         logger.info(f"列印管理模組初始化完成 - 標籤尺寸: {label_width_mm}x{label_height_mm}mm, 列印模式: {self.print_mode}")
 
     def _try_register_chinese_font(self):
-        """嘗試註冊中文字體"""
+        """註冊微軟正黑體供 PDF 模式使用（統一使用微軟正黑體）"""
         try:
-            # 常見的中文字體路徑
+            # 優先使用標準微軟正黑體，如果找不到則嘗試粗體版本
             font_paths = [
-                "C:/Windows/Fonts/msjh.ttc",  # 微軟正黑體
-                "C:/Windows/Fonts/kaiu.ttf",   # 標楷體
-                "/System/Library/Fonts/PingFang.ttc",  # macOS
-                "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"  # Linux
+                "C:/Windows/Fonts/msjh.ttc",   # 微軟正黑體（標準版）
+                "C:/Windows/Fonts/msjhbd.ttc", # 微軟正黑體（粗體版，備用）
             ]
             
             for font_path in font_paths:
                 if os.path.exists(font_path):
-                    pdfmetrics.registerFont(TTFont('ChineseFont', font_path))
-                    self.font_registered = True
-                    logger.info(f"成功註冊中文字體: {font_path}")
-                    break
+                    try:
+                        pdfmetrics.registerFont(TTFont('ChineseFont', font_path))
+                        self.font_registered = True
+                        logger.info(f"成功註冊字型: {font_path} (微軟正黑體)")
+                        return
+                    except Exception as e:
+                        logger.debug(f"無法註冊字型 {font_path}: {e}")
+                        continue
+            
+            # 跨平台備用方案（如果 Windows 上找不到）
+            if platform.system() == "Darwin":  # macOS
+                mac_fonts = ["/System/Library/Fonts/PingFang.ttc"]
+                for font_path in mac_fonts:
+                    if os.path.exists(font_path):
+                        try:
+                            pdfmetrics.registerFont(TTFont('ChineseFont', font_path))
+                            self.font_registered = True
+                            logger.info(f"成功註冊字型: {font_path} (macOS 備用)")
+                            return
+                        except:
+                            continue
+            elif platform.system() == "Linux":
+                linux_fonts = ["/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"]
+                for font_path in linux_fonts:
+                    if os.path.exists(font_path):
+                        try:
+                            pdfmetrics.registerFont(TTFont('ChineseFont', font_path))
+                            self.font_registered = True
+                            logger.info(f"成功註冊字型: {font_path} (Linux 備用)")
+                            return
+                        except:
+                            continue
             
             if not self.font_registered:
-                logger.warning("未找到中文字體，將使用預設字體")
+                logger.warning("未找到微軟正黑體字型，PDF 模式將使用預設字體")
+                logger.warning("請確認系統中已安裝微軟正黑體 (msjh.ttc 或 msjhbd.ttc)")
                 
         except Exception as e:
-            logger.warning(f"註冊中文字體失敗: {e}")
+            logger.warning(f"註冊微軟正黑體失敗: {e}")
+    
+    def _load_chinese_font_for_zpl(self):
+        """載入微軟正黑體供 ZPL 圖形模式使用（統一使用微軟正黑體）"""
+        try:
+            # 優先使用標準微軟正黑體，如果找不到則嘗試粗體版本
+            font_paths = [
+                "C:/Windows/Fonts/msjh.ttc",   # 微軟正黑體（標準版）
+                "C:/Windows/Fonts/msjhbd.ttc", # 微軟正黑體（粗體版，備用）
+            ]
+            
+            for font_path in font_paths:
+                if os.path.exists(font_path):
+                    try:
+                        # 測試是否可以載入字型
+                        test_font = ImageFont.truetype(font_path, self.zpl_chinese_font_size)
+                        self.zpl_chinese_font_path = font_path
+                        logger.info(f"ZPL 圖形模式使用字型: {font_path} (微軟正黑體)")
+                        return
+                    except Exception as e:
+                        logger.debug(f"無法載入字型 {font_path}: {e}")
+                        continue
+            
+            logger.error("未找到微軟正黑體字型，ZPL 圖形模式可能無法正確顯示文字")
+            logger.error("請確認系統中已安裝微軟正黑體 (msjh.ttc 或 msjhbd.ttc)")
+                
+        except Exception as e:
+            logger.error(f"載入微軟正黑體失敗: {e}")
+            logger.error("ZPL 圖形模式可能無法正確顯示文字")
+    
+    def _generate_fixed_graphics(self):
+        """生成固定文字的預定義圖形（使用微軟正黑體）"""
+        if not IMAGE_AVAILABLE or not self.zpl_chinese_font_path:
+            logger.warning("無法生成固定圖形：缺少 PIL 或微軟正黑體字型")
+            return
+        
+        try:
+            # 固定文字的列表（使用半形冒號）
+            fixed_texts = {
+                "ID": "ID:",
+                "NAME": "姓名:",
+                "BIRTH": "生日:",
+                "TIME": "列印時間:",
+                "NOTE": "備註:"
+            }
+            
+            for key, text in fixed_texts.items():
+                zpl_graphic = self._text_to_zpl_graphic(text, f"ITEM_{key}")
+                if zpl_graphic:
+                    self.zpl_fixed_graphics[key] = zpl_graphic
+                    logger.debug(f"生成固定圖形: {key} = {text}")
+            
+            logger.info(f"成功生成 {len(self.zpl_fixed_graphics)} 個固定圖形")
+            
+        except Exception as e:
+            logger.error(f"生成固定圖形失敗: {e}")
+    
+    def _text_to_zpl_graphic(self, text, item_name):
+        """將文字轉換為 ZPL 圖形格式（~DGR 指令）
+        
+        Args:
+            text: 要轉換的文字
+            item_name: ZPL 圖形項目名稱（如 ITEM_NAME）
+        
+        Returns:
+            ZPL 圖形指令字串（包含 ~DGR 定義），如果失敗則返回 None
+        """
+        if not IMAGE_AVAILABLE or not self.zpl_chinese_font_path:
+            return None
+        
+        try:
+            # 載入字型
+            font = ImageFont.truetype(self.zpl_chinese_font_path, self.zpl_chinese_font_size)
+            
+            # 計算文字尺寸
+            # 使用較大的臨時圖片來測量文字大小（包含上升和下降部分）
+            temp_img = Image.new('RGB', (1000, 200), (255, 255, 255))
+            temp_draw = ImageDraw.Draw(temp_img)
+            bbox = temp_draw.textbbox((0, 0), text, font=font)
+            
+            # 邊界框：left, top, right, bottom
+            # top 可能是負數（上升部分，如大寫字母），bottom 是正數
+            text_left = bbox[0]
+            text_top = bbox[1]  # 可能是負數
+            text_right = bbox[2]
+            text_bottom = bbox[3]
+            
+            text_width = text_right - text_left
+            text_height = text_bottom - text_top
+            
+            # 增加邊距（從4增加到6，避免邊緣裁切）
+            padding = 6
+            img_width = text_width + padding * 2
+            # 圖形高度需要包含完整的文字高度（包括上升和下降部分）
+            img_height = text_height + padding * 2
+            
+            # 建立 1-bit 黑白圖片
+            img = Image.new('1', (img_width, img_height), 1)  # 1 = 白色
+            draw = ImageDraw.Draw(img)
+            
+            # 計算文字繪製的 Y 座標
+            # 因為 text_top 可能是負數，需要調整 Y 座標
+            # 將文字向上移動 |text_top| 的距離，再加上 padding
+            # 這樣可以確保文字完整顯示，不會被裁切
+            text_y = padding - text_top  # 這樣可以確保文字完整顯示
+            
+            # 繪製文字（0 = 黑色）
+            draw.text((padding, text_y), text, font=font, fill=0)
+            
+            # 轉換為 ZPL HEX 格式
+            # ZPL 使用 ASCII 85 編碼或壓縮的 HEX
+            # 這裡使用壓縮的 HEX（ZPL 標準格式）
+            hex_data = self._image_to_zpl_hex(img)
+            
+            if not hex_data:
+                return None
+            
+            # 計算總位元組數和每行列數
+            bytes_per_row = (img_width + 7) // 8  # 每行需要幾個位元組（8位=1位元組）
+            total_bytes = bytes_per_row * img_height
+            
+            # 生成 ~DGR 指令
+            # 格式：~DGR:名稱,總位元組數,每行列數,壓縮的HEX資料
+            zpl_command = f"~DGR:{item_name},{total_bytes:05d},{bytes_per_row:03d},{hex_data}"
+            
+            return zpl_command
+            
+        except Exception as e:
+            logger.error(f"將文字轉換為 ZPL 圖形失敗: {text}, 錯誤: {e}")
+            return None
+    
+    def _image_to_zpl_hex(self, img):
+        """將 PIL 圖片轉換為 ZPL HEX 格式
+        
+        ZPL ~DGR 指令使用的格式：
+        - 每個位元組代表 8 個像素（水平方向，從左到右）
+        - 位元 7（最高位）對應最左側的像素
+        - 1 = 黑色，0 = 白色
+        
+        PIL '1' 模式：
+        - 0 = 黑色，1 = 白色
+        - 需要反轉
+        """
+        try:
+            width, height = img.size
+            bytes_per_row = (width + 7) // 8
+            
+            # 取得圖片的像素數據
+            pixels = img.load()
+            
+            # 轉換為位元組陣列
+            hex_chars = []
+            for y in range(height):
+                for x_byte in range(bytes_per_row):
+                    byte_value = 0
+                    for bit in range(8):
+                        pixel_x = x_byte * 8 + bit
+                        if pixel_x < width:
+                            # PIL 的 '1' 模式：0=黑色, 1=白色
+                            # ZPL 需要：0=白色, 1=黑色
+                            # 所以需要反轉：如果 PIL 是黑色(0)，ZPL 設為 1
+                            pixel_value = pixels[pixel_x, y]
+                            if pixel_value == 0:  # PIL 黑色像素
+                                # ZPL 設為 1（黑色）
+                                # 位元順序：最高位（bit 7）對應最左側像素
+                                byte_value |= (1 << (7 - bit))
+                            # 如果 pixel_value == 1（PIL 白色），ZPL 設為 0（白色），不需要操作
+                    
+                    # 轉換為 HEX（兩位數，大寫）
+                    hex_chars.append(f"{byte_value:02X}")
+            
+            # 合併所有 HEX 字元
+            hex_string = ''.join(hex_chars)
+            
+            return hex_string
+            
+        except Exception as e:
+            logger.error(f"圖片轉換為 ZPL HEX 失敗: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return None
 
     def generate_barcode(self, patient_id):
         """生成條碼圖片"""
         if not BARCODE_AVAILABLE or not self.use_barcode:
+            logger.debug("條碼功能不可用或已禁用")
             return None
             
         try:
             # 移除非數字和字母的字符
             clean_id = ''.join(c for c in patient_id if c.isalnum())
+            if not clean_id:
+                logger.warning(f"無效的身分證字號，無法生成條碼: {patient_id}")
+                return None
+            
+            logger.debug(f"開始生成條碼: {clean_id}, 類型: {self.barcode_type}")
             
             # 創建條碼
             barcode_class = barcode.get_barcode_class(self.barcode_type)
-            barcode_instance = barcode_class(clean_id, writer=ImageWriter())
+            if barcode_class is None:
+                logger.error(f"無法找到條碼類型: {self.barcode_type}")
+                return None
+            
+            # 使用 ImageWriter 生成條碼
+            # 注意：在打包環境中，可能需要確保所有依賴都正確載入
+            writer = ImageWriter()
+            barcode_instance = barcode_class(clean_id, writer=writer)
             
             # 生成條碼圖片到內存
             buffer = io.BytesIO()
             barcode_instance.write(buffer)
             
+            # 檢查緩衝區是否有資料
+            if buffer.tell() == 0:
+                logger.error("條碼緩衝區為空，生成失敗")
+                return None
+            
             # 將緩衝區轉換為圖片對象
             buffer.seek(0)
             barcode_image = Image.open(buffer)
             
+            # 轉換為 RGB 模式（確保與 ReportLab 相容）
+            if barcode_image.mode != 'RGB':
+                barcode_image = barcode_image.convert('RGB')
+            
+            logger.debug(f"條碼生成成功: {clean_id}, 尺寸: {barcode_image.size}")
             return barcode_image
         
+        except ImportError as e:
+            logger.error(f"條碼模組匯入失敗: {e}")
+            logger.error("這可能是打包後的問題，請檢查 PyInstaller 隱藏匯入設定")
+            logger.error(f"請確認 ID_Printer.spec 中包含所有必要的 barcode 子模組")
+            import traceback
+            logger.error(traceback.format_exc())
+            return None
+        except AttributeError as e:
+            logger.error(f"條碼模組屬性錯誤: {e}")
+            logger.error("可能是動態載入的模組在打包後無法正確載入")
+            import traceback
+            logger.error(traceback.format_exc())
+            return None
         except Exception as e:
-            logger.warning(f"生成條碼失敗: {e}")
+            logger.error(f"生成條碼失敗: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return None
 
     def _generate_label_pdf(self, patient_data, filename):
@@ -165,29 +481,54 @@ class PrintManager:
             # 生成條碼
             patient_id = patient_data.get('id', 'N/A')
             if self.use_barcode and BARCODE_AVAILABLE:
+                logger.info(f"開始生成條碼: patient_id={patient_id}, BARCODE_AVAILABLE={BARCODE_AVAILABLE}, use_barcode={self.use_barcode}")
                 barcode_image = self.generate_barcode(patient_id)
                 
                 if barcode_image:
-                    # 儲存條碼圖片到臨時檔案
-                    temp_barcode = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-                    barcode_image.save(temp_barcode.name)
-                    temp_barcode.close()
-                    
-                    # 計算條碼尺寸和位置
-                    barcode_width = self.label_width - 4 * mm  # 留出左右邊距
-                    barcode_height = 10 * mm  # 條碼高度
-                    
-                    # 在 PDF 中插入條碼圖片
-                    c.drawImage(temp_barcode.name, start_x, y_pos - barcode_height, width=barcode_width, height=barcode_height)
-                    
-                    # 刪除臨時檔案
                     try:
-                        os.remove(temp_barcode.name)
-                    except:
-                        pass
-                    
-                    # 移動到條碼下方（條碼本身帶一行文字，再加上一行間距）
-                    y_pos -= barcode_height + font_size + 2.5 * mm
+                        # 改用 ReportLab 的 ImageReader 直接從內存讀取，避免打包環境中臨時檔案路徑問題
+                        from reportlab.lib.utils import ImageReader
+                        
+                        # 將 PIL Image 轉換為 ReportLab 可用的格式
+                        # 先將圖片儲存到 BytesIO，然後用 ImageReader 讀取
+                        img_buffer = io.BytesIO()
+                        barcode_image.save(img_buffer, format='PNG')
+                        img_buffer.seek(0)
+                        
+                        # 使用 ImageReader 從內存讀取圖片（避免臨時檔案問題）
+                        img_reader = ImageReader(img_buffer)
+                        
+                        # 計算條碼尺寸和位置
+                        barcode_width = self.label_width - 4 * mm  # 留出左右邊距
+                        barcode_height = 10 * mm  # 條碼高度
+                        
+                        # 修正：條碼從標籤頂部開始繪製
+                        # ReportLab 座標系統：Y 座標是圖片的左下角
+                        # 如果要讓條碼貼齊標籤頂部，Y 座標應該是標籤高度減去條碼高度，再減去頂部邊距
+                        barcode_y = self.label_height - barcode_height - 2 * mm  # 頂部留2mm邊距
+                        
+                        # 在 PDF 中插入條碼圖片（直接從內存讀取，避免臨時檔案問題）
+                        logger.info(f"插入條碼: 位置=({start_x}, {barcode_y}), 尺寸=({barcode_width}, {barcode_height}), 圖片尺寸={barcode_image.size}")
+                        c.drawImage(img_reader, start_x, barcode_y, width=barcode_width, height=barcode_height)
+                        logger.info("條碼圖片已成功插入 PDF（使用內存圖片，避免臨時檔案問題）")
+                        
+                        # 移動到條碼下方（條碼本身帶一行文字，再加上一行間距）
+                        y_pos = barcode_y - font_size - 2.5 * mm
+                        
+                    except Exception as e:
+                        logger.error(f"處理條碼圖片失敗: {e}")
+                        import traceback
+                        logger.error(traceback.format_exc())
+                        # 即使條碼失敗，也繼續生成 PDF
+                else:
+                    logger.warning("條碼生成返回 None，跳過條碼顯示")
+                    # 診斷條碼生成失敗的原因
+                    if not BARCODE_AVAILABLE:
+                        logger.error("條碼模組不可用（可能在打包後環境中無法載入）")
+                    elif not self.use_barcode:
+                        logger.debug("條碼功能已在配置中禁用")
+                    else:
+                        logger.error("條碼生成失敗，但未拋出異常（可能是模組載入問題，請檢查 PyInstaller 隱藏導入設定）")
             
             # 設定統一的行距
             uniform_spacing = line_height + 0.5 * mm
@@ -257,21 +598,69 @@ class PrintManager:
             raise PrintManagerError(f"生成文字標籤失敗: {e}")
 
     def _generate_zpl_content(self, patient_data):
-        """生成 ZPL 內容 (不寫入檔案)"""
+        """生成 ZPL 內容 (不寫入檔案) - 統一使用圖形模式（固定圖形 + 動態圖形）"""
         try:
             print_time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M")
             patient_id = patient_data.get('id', 'N/A')
+            patient_name = patient_data.get('name', 'N/A')
+            dob = patient_data.get('dob', 'N/A')
+            note = patient_data.get('note', '').strip()
             
             # ZPL 指令開始
             zpl_content = "^XA\n"  # 開始標籤格式
-            
-            # 設定字符編碼為 UTF-8（支援中文）
-            zpl_content += "^CI28\n"  # UTF-8 編碼
             
             # 設定標籤尺寸 (以點為單位，203 DPI)
             # 50mm = 394點, 35mm = 276點
             zpl_content += "^PW394\n"  # 設定標籤寬度
             zpl_content += "^LL276\n"  # 設定標籤長度
+            
+            # ========== 統一圖形模式 ==========
+            # 1. 先定義固定文字的預定義圖形（在初始化時已生成）
+            for key, graphic_def in self.zpl_fixed_graphics.items():
+                zpl_content += graphic_def + "\n"
+            
+            # 2. 動態生成所有變動文字的圖形（統一使用圖形模式，確保字型一致）
+            dynamic_graphics = {}  # 儲存動態生成的圖形定義和顯示指令
+            
+            # 生成身分證字號的圖形
+            if patient_id and patient_id != 'N/A':
+                item_name = f"ITEM_ID_DYN_{hash(patient_id) % 10000}"
+                id_graphic = self._text_to_zpl_graphic(patient_id, item_name)
+                if id_graphic:
+                    zpl_content += id_graphic + "\n"
+                    dynamic_graphics['patient_id'] = item_name
+            
+            # 生成病人姓名的圖形
+            if patient_name and patient_name != 'N/A':
+                item_name = f"ITEM_NAME_DYN_{hash(patient_name) % 10000}"
+                name_graphic = self._text_to_zpl_graphic(patient_name, item_name)
+                if name_graphic:
+                    zpl_content += name_graphic + "\n"
+                    dynamic_graphics['patient_name'] = item_name
+            
+            # 生成生日的圖形
+            if dob and dob != 'N/A':
+                item_name = f"ITEM_DOB_DYN_{hash(dob) % 10000}"
+                dob_graphic = self._text_to_zpl_graphic(dob, item_name)
+                if dob_graphic:
+                    zpl_content += dob_graphic + "\n"
+                    dynamic_graphics['dob'] = item_name
+            
+            # 生成列印時間的圖形
+            if print_time:
+                item_name = f"ITEM_TIME_DYN_{hash(print_time) % 10000}"
+                time_graphic = self._text_to_zpl_graphic(print_time, item_name)
+                if time_graphic:
+                    zpl_content += time_graphic + "\n"
+                    dynamic_graphics['print_time'] = item_name
+            
+            # 生成備註的圖形
+            if note:
+                item_name = f"ITEM_NOTE_DYN_{hash(note) % 10000}"
+                note_graphic = self._text_to_zpl_graphic(note, item_name)
+                if note_graphic:
+                    zpl_content += note_graphic + "\n"
+                    dynamic_graphics['note'] = item_name
             
             y_pos = 30  # 起始Y位置
             
@@ -282,24 +671,104 @@ class PrintManager:
                 y_pos += 70 + 12  # 條碼後移動位置（條碼本身帶一行文字，再加一行間距約12點）
             
             # ID (身分證字號)
-            zpl_content += f"^FO30,{y_pos}^A0N,22,22^FDID：{patient_id}^FS\n"
-            y_pos += 35
+            # 使用固定圖形顯示「ID:」，身分證字號使用動態圖形
+            if "ID" in self.zpl_fixed_graphics:
+                zpl_content += f"^FO30,{y_pos}^XGITEM_ID^FS\n"
+                # 計算「ID:」圖形的寬度（約40點），然後顯示身分證字號圖形
+                id_label_width = 40
+                if 'patient_id' in dynamic_graphics:
+                    zpl_content += f"^FO{30 + id_label_width},{y_pos}^XG{dynamic_graphics['patient_id']}^FS\n"
+                else:
+                    # 如果圖形生成失敗，使用備用方案（字型）
+                    zpl_content += f"^FO{30 + id_label_width},{y_pos}^A0N,22,22^FD{patient_id}^FS\n"
+            else:
+                # 如果沒有固定圖形，使用動態圖形或字型
+                if 'patient_id' in dynamic_graphics:
+                    zpl_content += f"^FO30,{y_pos}^XG{dynamic_graphics['patient_id']}^FS\n"
+                else:
+                    zpl_content += f"^FO30,{y_pos}^A0N,22,22^FDID: {patient_id}^FS\n"
+            y_pos += 40
             
-            # 姓名與生日同行
-            patient_name = patient_data.get('name', 'N/A')
-            dob = patient_data.get('dob', 'N/A')
-            name_and_dob = f"姓名：{patient_name}  {dob}"
-            zpl_content += f"^FO30,{y_pos}^A0N,22,22^FD{name_and_dob}^FS\n"
-            y_pos += 35
+            # 姓名與生日
+            if "NAME" in self.zpl_fixed_graphics:
+                # 使用固定圖形顯示「姓名:」
+                zpl_content += f"^FO30,{y_pos}^XGITEM_NAME^FS\n"
+                name_label_width = 50  # 「姓名:」的寬度約50點
+                
+                # 使用動態圖形顯示姓名
+                if 'patient_name' in dynamic_graphics:
+                    zpl_content += f"^FO{30 + name_label_width},{y_pos}^XG{dynamic_graphics['patient_name']}^FS\n"
+                else:
+                    # 如果圖形生成失敗，使用備用方案（字型）
+                    zpl_content += f"^FO{30 + name_label_width},{y_pos}^A0N,22,22^FD{patient_name}^FS\n"
+                
+                # 在同行的右側顯示生日
+                if "BIRTH" in self.zpl_fixed_graphics:
+                    birth_x = 200  # 生日標籤的 X 位置
+                    zpl_content += f"^FO{birth_x},{y_pos}^XGITEM_BIRTH^FS\n"
+                    birth_label_width = 50
+                    # 使用動態圖形顯示生日
+                    if 'dob' in dynamic_graphics:
+                        zpl_content += f"^FO{birth_x + birth_label_width},{y_pos}^XG{dynamic_graphics['dob']}^FS\n"
+                    else:
+                        # 如果圖形生成失敗，使用備用方案（字型）
+                        zpl_content += f"^FO{birth_x + birth_label_width},{y_pos}^A0N,22,22^FD{dob}^FS\n"
+                else:
+                    # 如果沒有固定圖形，直接顯示動態圖形
+                    if 'dob' in dynamic_graphics:
+                        zpl_content += f"^FO200,{y_pos}^XG{dynamic_graphics['dob']}^FS\n"
+                    else:
+                        zpl_content += f"^FO200,{y_pos}^A0N,22,22^FD{dob}^FS\n"
+            else:
+                # 如果沒有固定圖形，使用動態圖形
+                if 'patient_name' in dynamic_graphics:
+                    zpl_content += f"^FO30,{y_pos}^XG{dynamic_graphics['patient_name']}^FS\n"
+                else:
+                    zpl_content += f"^FO30,{y_pos}^A0N,22,22^FDName: {patient_name}^FS\n"
+                # 顯示生日
+                if 'dob' in dynamic_graphics:
+                    zpl_content += f"^FO200,{y_pos}^XG{dynamic_graphics['dob']}^FS\n"
+                else:
+                    zpl_content += f"^FO200,{y_pos}^A0N,22,22^FDDOB: {dob}^FS\n"
+            y_pos += 40
             
             # 列印時間
-            zpl_content += f"^FO30,{y_pos}^A0N,22,22^FD列印時間：{print_time}^FS\n"
-            y_pos += 35
+            if "TIME" in self.zpl_fixed_graphics:
+                zpl_content += f"^FO30,{y_pos}^XGITEM_TIME^FS\n"
+                time_label_width = 80  # 「列印時間:」的寬度約80點
+                # 時間值往右移動一個中文字大小（約22點），避免重疊
+                time_value_x = 30 + time_label_width + 22
+                # 使用動態圖形顯示列印時間
+                if 'print_time' in dynamic_graphics:
+                    zpl_content += f"^FO{time_value_x},{y_pos}^XG{dynamic_graphics['print_time']}^FS\n"
+                else:
+                    # 如果圖形生成失敗，使用備用方案（字型）
+                    zpl_content += f"^FO{time_value_x},{y_pos}^A0N,22,22^FD{print_time}^FS\n"
+            else:
+                # 如果沒有固定圖形，使用動態圖形
+                if 'print_time' in dynamic_graphics:
+                    zpl_content += f"^FO30,{y_pos}^XG{dynamic_graphics['print_time']}^FS\n"
+                else:
+                    zpl_content += f"^FO30,{y_pos}^A0N,22,22^FDTime: {print_time}^FS\n"
+            y_pos += 40
             
             # 備註 (如果有)
-            note = patient_data.get('note', '').strip()
             if note:
-                zpl_content += f"^FO30,{y_pos}^A0N,22,22^FD備註: {note}^FS\n"
+                if "NOTE" in self.zpl_fixed_graphics:
+                    zpl_content += f"^FO30,{y_pos}^XGITEM_NOTE^FS\n"
+                    note_label_width = 50  # 「備註:」的寬度約50點
+                    # 使用動態圖形顯示備註
+                    if 'note' in dynamic_graphics:
+                        zpl_content += f"^FO{30 + note_label_width},{y_pos}^XG{dynamic_graphics['note']}^FS\n"
+                    else:
+                        # 如果圖形生成失敗，使用備用方案（字型）
+                        zpl_content += f"^FO{30 + note_label_width},{y_pos}^A0N,22,22^FD{note}^FS\n"
+                else:
+                    # 如果沒有固定圖形，使用動態圖形
+                    if 'note' in dynamic_graphics:
+                        zpl_content += f"^FO30,{y_pos}^XG{dynamic_graphics['note']}^FS\n"
+                    else:
+                        zpl_content += f"^FO30,{y_pos}^A0N,22,22^FDNote: {note}^FS\n"
             
             # ZPL 指令結束
             zpl_content += "^XZ\n"

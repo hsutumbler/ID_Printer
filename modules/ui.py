@@ -310,7 +310,7 @@ class MedicalCardApp:
         self.create_stats_content()
         
         # 版本號標籤 - 放在主視窗右下方
-        version_label = ttk.Label(self.root, text="v1_20251025", 
+        version_label = ttk.Label(self.root, text="Ver_1_20251105", 
                                  font=(self.default_font, 8, "underline"),
                                  foreground="gray")
         version_label.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)

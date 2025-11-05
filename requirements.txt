@@ -1,0 +1,19 @@
+# ID_Printer 專案依賴套件
+# 使用 32-bit Python 安裝
+
+# 核心套件 (必要)
+pyinstaller>=5.0
+
+# PDF 生成 (建議安裝)
+reportlab>=3.6.0
+
+# 條碼生成 (建議安裝)
+python-barcode>=0.15.0
+Pillow>=9.0.0
+
+# Windows COM 支援 (建議安裝，用於健保卡讀卡機)
+pywin32>=300
+
+# 序列埠支援 (可選)
+pyserial>=3.5
+

@@ -14,8 +14,19 @@ import os
 import tkinter as tk
 from tkinter import messagebox
 
-# 將 modules 目錄加入 Python 路徑
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
+# PyInstaller 打包後的路徑處理
+if getattr(sys, 'frozen', False):
+    # 打包後的執行檔模式
+    BASE_DIR = os.path.dirname(sys.executable)
+    # PyInstaller 會將資源檔案放在臨時目錄
+    if hasattr(sys, '_MEIPASS'):
+        # 將 modules 目錄加入 Python 路徑（從臨時目錄）
+        sys.path.insert(0, os.path.join(sys._MEIPASS, 'modules'))
+else:
+    # 開發模式
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # 將 modules 目錄加入 Python 路徑
+    sys.path.insert(0, os.path.join(BASE_DIR, 'modules'))
 
 try:
     from modules.ui import create_app
@@ -112,8 +123,16 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    # 設定工作目錄為程式所在目錄
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    # 設定工作目錄為執行檔所在目錄（而非臨時目錄）
+    if getattr(sys, 'frozen', False):
+        # 打包後的執行檔模式：使用執行檔所在目錄
+        BASE_DIR = os.path.dirname(sys.executable)
+    else:
+        # 開發模式：使用腳本所在目錄
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    
+    # 設定工作目錄
+    os.chdir(BASE_DIR)
     
     # 執行主程式
     exit_code = main()
