@@ -11,8 +11,25 @@
 
 import sys
 import os
+import locale
 import tkinter as tk
 from tkinter import messagebox
+
+# 設定系統編碼為 Big5（解決健保卡讀卡機視窗亂碼問題）
+try:
+    # 嘗試設定為 Big5 編碼（健保署標準編碼）
+    locale.setlocale(locale.LC_ALL, 'Chinese_Taiwan.950')  # Big5
+    os.environ['LANG'] = 'zh_TW.BIG5'
+    os.environ['LC_ALL'] = 'zh_TW.BIG5'
+except:
+    try:
+        # 備用方案：設定為 UTF-8
+        locale.setlocale(locale.LC_ALL, 'Chinese_Taiwan.65001')  # UTF-8
+        os.environ['LANG'] = 'zh_TW.UTF-8'
+        os.environ['LC_ALL'] = 'zh_TW.UTF-8'
+    except:
+        # 如果都失敗，使用系統預設編碼
+        pass
 
 # PyInstaller 打包後的路徑處理
 if getattr(sys, 'frozen', False):

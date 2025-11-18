@@ -29,21 +29,21 @@ class DataProcessor:
             if not patient_name:
                 raise DataProcessingError("姓名資料不完整")
             
-            # 處理出生年月日
+            # 處理出生年月日（採用民國年格式）
             raw_dob = raw_data.get("BIRTH_DATE", "").strip()
             if raw_dob and len(raw_dob) >= 7:
                 try:
                     if len(raw_dob) == 8:
-                        # YYYYMMDD 格式
+                        # YYYYMMDD 格式（西元年），轉換為民國年
                         dob_obj = datetime.datetime.strptime(raw_dob, "%Y%m%d")
-                        patient_dob = dob_obj.strftime("%Y/%m/%d")
+                        roc_year = dob_obj.year - 1911
+                        patient_dob = f"{roc_year:03d}/{dob_obj.month:02d}/{dob_obj.day:02d}"
                     elif len(raw_dob) == 7:
-                        # 民國年 YYYMMDD 格式
-                        year = int(raw_dob[:3]) + 1911
+                        # 民國年 YYYMMDD 格式，保持民國年格式
+                        roc_year = int(raw_dob[:3])
                         month = int(raw_dob[3:5])
                         day = int(raw_dob[5:7])
-                        dob_obj = datetime.datetime(year, month, day)
-                        patient_dob = dob_obj.strftime("%Y/%m/%d")
+                        patient_dob = f"{roc_year:03d}/{month:02d}/{day:02d}"
                     else:
                         # 其他格式嘗試解析
                         if "/" in raw_dob:

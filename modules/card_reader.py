@@ -339,24 +339,23 @@ class CardReader:
         """
         logger.info("開始讀取健保卡...")
         
-        # 優先嘗試使用 DLL 直接讀取
+        # 優先嘗試使用 DLL 直接讀取（使用 hisGetBasicData，參考程式的方法）
         if self.use_dll:
             try:
-                logger.info("使用 DLL 直接讀取健保卡")
+                logger.info("使用 DLL 直接讀取健保卡（hisGetBasicData）")
                 card_data = self.nhi_dll.read_card()
                 logger.info(f"DLL 讀取成功，病人: {card_data.get('FULL_NAME', 'N/A')}")
                 return card_data
+            except NHICardDLLError as e:
+                # DLL 讀取失敗，拋出更明確的錯誤訊息
+                error_msg = str(e)
+                logger.error(f"健保卡讀取失敗（hisGetBasicData）: {error_msg}")
+                raise CardReaderError(f"健保卡讀取失敗: {error_msg}")
             except Exception as e:
-                logger.warning(f"DLL 讀取失敗: {e}，嘗試使用 csReadCard")
-                # DLL 讀取失敗，嘗試使用 csReadCard
-                try:
-                    card_data = self._read_card_with_csreadcard()
-                    logger.info(f"csReadCard 讀取成功，病人: {card_data.get('FULL_NAME', 'N/A')}")
-                    return card_data
-                except Exception as e2:
-                    logger.error(f"csReadCard 也失敗: {e2}")
-                    # 兩種方法都失敗，拋出錯誤
-                    raise CardReaderError(f"健保卡讀取失敗: {e2}")
+                # 其他未知錯誤
+                error_msg = str(e)
+                logger.error(f"健保卡讀取時發生未知錯誤: {error_msg}")
+                raise CardReaderError(f"健保卡讀取失敗: {error_msg}")
         
         # 如果沒有 DLL，直接嘗試 csReadCard
         else:

@@ -466,22 +466,10 @@ class MedicalCardApp:
             self.patient_note_var.set("")  # 讀卡後備註欄位清空，供使用者輸入
             self.card_no_var.set(processed_data.get("card_no", ""))
             
-            # 根據離線模式設定不同的狀態訊息
-            if self.offline_mode:
-                self.status_text.set("離線模式 - 讀取成功！請確認資料並設定列印張數")
-            else:
-                self.status_text.set("讀取成功！請確認資料並設定列印張數")
+            # 設定狀態訊息
+            self.status_text.set("讀取成功-請核對病人姓名與生日")
             
             self.print_button.config(state=tk.NORMAL)
-            
-            # 顯示確認對話框，提醒醫檢師核對病人身分
-            confirm_msg = f"健保卡讀取成功！\n\n" \
-                         f"病人: {processed_data['name']}\n" \
-                         f"ID: {processed_data['id']}\n" \
-                         f"生日: {processed_data['dob']}\n\n" \
-                         f"⚠️ 請仔細核對病人身分，確認無誤後再列印標籤！"
-            
-            messagebox.showinfo("讀取成功", confirm_msg)
             
             # 記錄讀取事件
             try:
@@ -508,6 +496,119 @@ class MedicalCardApp:
             if self.mode_var.get() == "card":
                 self.read_button.config(state=tk.NORMAL)
 
+    def _show_debug_info_window(self, raw_data, processed_data):
+        """
+        顯示除錯訊息視窗（顯示回傳的原始資料和解析後的資料）
+        此視窗用於除錯，之後如果程式正確會移除
+        """
+        try:
+            # 建立新視窗
+            debug_window = tk.Toplevel(self.root)
+            debug_window.title("健保卡讀取除錯資訊")
+            debug_window.geometry("700x600")
+            debug_window.resizable(True, True)
+            
+            # 建立主框架
+            main_frame = ttk.Frame(debug_window, padding="10")
+            main_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # 標題
+            title_label = ttk.Label(main_frame, text="健保卡讀取回傳資訊", 
+                                   font=(self.default_font, 12, "bold"))
+            title_label.pack(pady=(0, 10))
+            
+            # 建立 Notebook（分頁）
+            notebook = ttk.Notebook(main_frame)
+            notebook.pack(fill=tk.BOTH, expand=True)
+            
+            # 分頁1：原始資料
+            raw_frame = ttk.Frame(notebook, padding="10")
+            notebook.add(raw_frame, text="原始資料")
+            
+            raw_text = tk.Text(raw_frame, wrap=tk.WORD, font=("Consolas", 10))
+            raw_scrollbar = ttk.Scrollbar(raw_frame, orient=tk.VERTICAL, command=raw_text.yview)
+            raw_text.configure(yscrollcommand=raw_scrollbar.set)
+            
+            # 顯示原始資料
+            raw_info = "=== 原始回傳資料 ===\n\n"
+            raw_info += f"完整資料字典:\n{raw_data}\n\n"
+            
+            # 如果有完整字串，顯示它
+            if "CARD_WHOLE_STR" in raw_data:
+                raw_info += f"完整健保卡字串:\n{raw_data['CARD_WHOLE_STR']}\n\n"
+                raw_info += f"字串長度: {len(raw_data['CARD_WHOLE_STR'])} 字元\n\n"
+                raw_info += f"字串（repr）:\n{repr(raw_data['CARD_WHOLE_STR'])}\n\n"
+            
+            # 顯示所有原始欄位
+            raw_info += "=== 原始欄位 ===\n\n"
+            for key, value in raw_data.items():
+                raw_info += f"{key}: {value}\n"
+            
+            raw_text.insert(tk.END, raw_info)
+            raw_text.config(state=tk.DISABLED)
+            raw_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            raw_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            
+            # 分頁2：解析後的資料
+            parsed_frame = ttk.Frame(notebook, padding="10")
+            notebook.add(parsed_frame, text="解析後的資料")
+            
+            parsed_text = tk.Text(parsed_frame, wrap=tk.WORD, font=("Consolas", 10))
+            parsed_scrollbar = ttk.Scrollbar(parsed_frame, orient=tk.VERTICAL, command=parsed_text.yview)
+            parsed_text.configure(yscrollcommand=parsed_scrollbar.set)
+            
+            # 顯示解析後的資料
+            parsed_info = "=== 解析後的資料 ===\n\n"
+            parsed_info += f"完整資料字典:\n{processed_data}\n\n"
+            
+            parsed_info += "=== 各欄位詳情 ===\n\n"
+            parsed_info += f"身分證字號: {processed_data.get('id', 'N/A')}\n"
+            parsed_info += f"姓名: {processed_data.get('name', 'N/A')}\n"
+            parsed_info += f"出生日期: {processed_data.get('dob', 'N/A')}\n"
+            parsed_info += f"性別: {processed_data.get('sex', 'N/A')}\n"
+            parsed_info += f"健保卡號後四碼: {processed_data.get('card_no', 'N/A')}\n"
+            parsed_info += f"讀取時間: {processed_data.get('read_time', 'N/A')}\n"
+            
+            parsed_text.insert(tk.END, parsed_info)
+            parsed_text.config(state=tk.DISABLED)
+            parsed_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            parsed_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            
+            # 分頁3：資料對照
+            compare_frame = ttk.Frame(notebook, padding="10")
+            notebook.add(compare_frame, text="資料對照")
+            
+            compare_text = tk.Text(compare_frame, wrap=tk.WORD, font=("Consolas", 10))
+            compare_scrollbar = ttk.Scrollbar(compare_frame, orient=tk.VERTICAL, command=compare_text.yview)
+            compare_text.configure(yscrollcommand=compare_scrollbar.set)
+            
+            # 顯示資料對照
+            compare_info = "=== 原始資料 → 解析後資料 ===\n\n"
+            compare_info += f"原始卡號: {raw_data.get('CARD_NUMBER', 'N/A')} → 解析後: {processed_data.get('card_no', 'N/A')}\n"
+            compare_info += f"原始姓名: {raw_data.get('FULL_NAME', 'N/A')} → 解析後: {processed_data.get('name', 'N/A')}\n"
+            compare_info += f"原始身分證: {raw_data.get('ID_NUMBER', 'N/A')} → 解析後: {processed_data.get('id', 'N/A')}\n"
+            compare_info += f"原始出生日期: {raw_data.get('BIRTH_DATE', 'N/A')} → 解析後: {processed_data.get('dob', 'N/A')}\n"
+            compare_info += f"原始性別: {raw_data.get('SEX', 'N/A')} → 解析後: {processed_data.get('sex', 'N/A')}\n"
+            
+            compare_text.insert(tk.END, compare_info)
+            compare_text.config(state=tk.DISABLED)
+            compare_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            compare_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            
+            # 關閉按鈕
+            button_frame = ttk.Frame(main_frame)
+            button_frame.pack(pady=(10, 0))
+            
+            close_button = ttk.Button(button_frame, text="關閉", command=debug_window.destroy)
+            close_button.pack()
+            
+            logger.info("顯示除錯訊息視窗")
+            
+        except Exception as e:
+            logger.error(f"顯示除錯訊息視窗失敗: {e}")
+            # 如果除錯視窗建立失敗，不影響主程式運作
+            pass
+    
     def _on_read_error(self, error):
         """讀卡失敗回調"""
         error_msg = str(error)
