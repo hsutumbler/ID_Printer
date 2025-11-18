@@ -243,7 +243,8 @@ class PrintManager:
         try:
             # 固定文字的列表（使用半形冒號）
             fixed_texts = {
-                "ID": "ID:",
+                "CHART_NO": "病歷號:",
+                "ID": "身分證字號:",
                 "NAME": "姓名:",
                 "BIRTH": "生日:",
                 "TIME": "列印時間:",
@@ -478,11 +479,19 @@ class PrintManager:
             # 標籤內容 - 按照要求的排版
             y_pos = start_y
             
-            # 生成條碼
+            # 獲取病歷號和身分證字號
+            chart_no = patient_data.get('chart_no', '').strip()
             patient_id = patient_data.get('id', 'N/A')
+            
+            # 生成條碼（優先使用病歷號，如果沒有病歷號則使用身分證字號）
+            # 確保病歷號不為空且不是 'N/A'，才使用病歷號
+            if chart_no and chart_no != 'N/A':
+                barcode_value = chart_no
+            else:
+                barcode_value = patient_id if patient_id and patient_id != 'N/A' else 'N/A'
             if self.use_barcode and BARCODE_AVAILABLE:
-                logger.info(f"開始生成條碼: patient_id={patient_id}, BARCODE_AVAILABLE={BARCODE_AVAILABLE}, use_barcode={self.use_barcode}")
-                barcode_image = self.generate_barcode(patient_id)
+                logger.info(f"開始生成條碼: barcode_value={barcode_value}, BARCODE_AVAILABLE={BARCODE_AVAILABLE}, use_barcode={self.use_barcode}")
+                barcode_image = self.generate_barcode(barcode_value)
                 
                 if barcode_image:
                     try:
@@ -533,9 +542,13 @@ class PrintManager:
             # 設定統一的行距
             uniform_spacing = line_height + 0.5 * mm
             
-            # 身分證字號
+            # 病歷號和身分證字號同行
             c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
-            c.drawString(start_x, y_pos, f"ID：{patient_data.get('id', 'N/A')}")
+            if chart_no:
+                chart_and_id = f"病歷號：{chart_no}   {patient_id}"
+            else:
+                chart_and_id = f"病歷號：   {patient_id}"
+            c.drawString(start_x, y_pos, chart_and_id)
             y_pos -= uniform_spacing
             
             # 姓名與生日同行
@@ -544,9 +557,16 @@ class PrintManager:
             c.drawString(start_x, y_pos, name_and_dob)
             y_pos -= uniform_spacing
             
-            # 列印時間
+            # 列印時間（格式：YYYY/MM/DD   HH:MM）
             c.setFont('ChineseFont' if self.font_registered else 'Helvetica', font_size)
-            c.drawString(start_x, y_pos, f"列印時間：{print_time}")
+            # 將時間格式改為日期和時間分開顯示
+            time_parts = print_time.split(' ')
+            if len(time_parts) == 2:
+                date_part, time_part = time_parts
+                time_display = f"列印時間：{date_part}   {time_part}"
+            else:
+                time_display = f"列印時間：{print_time}"
+            c.drawString(start_x, y_pos, time_display)
             y_pos -= uniform_spacing
             
             # 備註 - 只在有內容時顯示
@@ -570,10 +590,32 @@ class PrintManager:
         try:
             print_time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M")
             patient_id = patient_data.get('id', 'N/A')
+            chart_no = patient_data.get('chart_no', '').strip()
+            
+            # 條碼值（優先使用病歷號，如果沒有病歷號則使用身分證字號）
+            # 確保病歷號不為空且不是 'N/A'，才使用病歷號
+            if chart_no and chart_no != 'N/A':
+                barcode_value = chart_no
+            else:
+                barcode_value = patient_id if patient_id and patient_id != 'N/A' else 'N/A'
             
             # 使用 ASCII 字符模擬條碼
             barcode_ascii = "|||||||||||  ||||||||||||  ||||||" if self.use_barcode else ""
-            barcode_line = f"{barcode_ascii} (條碼)\n" if self.use_barcode else ""
+            barcode_line = f"{barcode_ascii} (條碼-{barcode_value})\n" if self.use_barcode else ""
+            
+            # 病歷號和身分證字號同行
+            if chart_no:
+                chart_and_id_line = f"病歷號：{chart_no}   {patient_id}\n"
+            else:
+                chart_and_id_line = f"病歷號：   {patient_id}\n"
+            
+            # 列印時間（格式：YYYY/MM/DD   HH:MM）
+            time_parts = print_time.split(' ')
+            if len(time_parts) == 2:
+                date_part, time_part = time_parts
+                time_line = f"列印時間：{date_part}   {time_part}\n"
+            else:
+                time_line = f"列印時間：{print_time}\n"
             
             # 備註 - 只在有內容時顯示
             note = patient_data.get('note', '').strip()
@@ -581,10 +623,8 @@ class PrintManager:
             
             content = f"""
 ==========================================
-{barcode_line}ID：{patient_data.get('id', 'N/A')}
-姓名：{patient_data.get('name', 'N/A')}    {patient_data.get('dob', 'N/A')}
-列印時間：{print_time}
-{note_line}==========================================
+{barcode_line}{chart_and_id_line}姓名：{patient_data.get('name', 'N/A')}    {patient_data.get('dob', 'N/A')}
+{time_line}{note_line}==========================================
 """
             
             with open(filename, 'w', encoding='utf-8') as f:
@@ -605,6 +645,14 @@ class PrintManager:
             patient_name = patient_data.get('name', 'N/A')
             dob = patient_data.get('dob', 'N/A')
             note = patient_data.get('note', '').strip()
+            chart_no = patient_data.get('chart_no', '').strip()
+            
+            # 條碼值（優先使用病歷號，如果沒有病歷號則使用身分證字號）
+            # 確保病歷號不為空且不是 'N/A'，才使用病歷號
+            if chart_no and chart_no != 'N/A':
+                barcode_value = chart_no
+            else:
+                barcode_value = patient_id if patient_id and patient_id != 'N/A' else 'N/A'
             
             # ZPL 指令開始
             zpl_content = "^XA\n"  # 開始標籤格式
@@ -654,6 +702,15 @@ class PrintManager:
                     zpl_content += time_graphic + "\n"
                     dynamic_graphics['print_time'] = item_name
             
+            # 生成病歷號的圖形
+            chart_no = patient_data.get('chart_no', '').strip()
+            if chart_no:
+                item_name = f"ITEM_CHART_NO_DYN_{hash(chart_no) % 10000}"
+                chart_no_graphic = self._text_to_zpl_graphic(chart_no, item_name)
+                if chart_no_graphic:
+                    zpl_content += chart_no_graphic + "\n"
+                    dynamic_graphics['chart_no'] = item_name
+            
             # 生成備註的圖形
             if note:
                 item_name = f"ITEM_NOTE_DYN_{hash(note) % 10000}"
@@ -664,29 +721,50 @@ class PrintManager:
             
             y_pos = 30  # 起始Y位置
             
-            # 條碼 (如果啟用)
+            # 條碼 (如果啟用，使用病歷號或身分證字號)
             if self.use_barcode:
                 # Code 128 條碼，高度50點
-                zpl_content += f"^FO30,{y_pos}^BY2^BCN,50,Y,N,N^FD{patient_id}^FS\n"
+                zpl_content += f"^FO30,{y_pos}^BY2^BCN,50,Y,N,N^FD{barcode_value}^FS\n"
                 y_pos += 70 + 12  # 條碼後移動位置（條碼本身帶一行文字，再加一行間距約12點）
             
-            # ID (身分證字號)
-            # 使用固定圖形顯示「ID:」，身分證字號使用動態圖形
-            if "ID" in self.zpl_fixed_graphics:
-                zpl_content += f"^FO30,{y_pos}^XGITEM_ID^FS\n"
-                # 計算「ID:」圖形的寬度（約40點），然後顯示身分證字號圖形
-                id_label_width = 40
-                if 'patient_id' in dynamic_graphics:
-                    zpl_content += f"^FO{30 + id_label_width},{y_pos}^XG{dynamic_graphics['patient_id']}^FS\n"
+            # 病歷號和身分證字號同行
+            if "CHART_NO" in self.zpl_fixed_graphics:
+                # 顯示「病歷號:」標籤
+                zpl_content += f"^FO30,{y_pos}^XGITEM_CHART_NO^FS\n"
+                chart_no_label_width = 60  # 「病歷號:」的寬度約60點
+                
+                # 顯示病歷號值（如果有）
+                if chart_no:
+                    if 'chart_no' in dynamic_graphics:
+                        zpl_content += f"^FO{30 + chart_no_label_width},{y_pos}^XG{dynamic_graphics['chart_no']}^FS\n"
+                    else:
+                        zpl_content += f"^FO{30 + chart_no_label_width},{y_pos}^A0N,22,22^FD{chart_no}^FS\n"
+                    # 病歷號後留空格，然後顯示身分證字號
+                    chart_no_value_width = len(chart_no) * 12  # 估算病歷號寬度
+                    id_x = 30 + chart_no_label_width + chart_no_value_width + 20  # 加20點間距
                 else:
-                    # 如果圖形生成失敗，使用備用方案（字型）
-                    zpl_content += f"^FO{30 + id_label_width},{y_pos}^A0N,22,22^FD{patient_id}^FS\n"
+                    # 沒有病歷號，直接顯示身分證字號
+                    id_x = 30 + chart_no_label_width + 20
+                
+                # 顯示身分證字號（不使用標籤，直接顯示值）
+                if 'patient_id' in dynamic_graphics:
+                    zpl_content += f"^FO{id_x},{y_pos}^XG{dynamic_graphics['patient_id']}^FS\n"
+                else:
+                    zpl_content += f"^FO{id_x},{y_pos}^A0N,22,22^FD{patient_id}^FS\n"
             else:
                 # 如果沒有固定圖形，使用動態圖形或字型
-                if 'patient_id' in dynamic_graphics:
-                    zpl_content += f"^FO30,{y_pos}^XG{dynamic_graphics['patient_id']}^FS\n"
+                if chart_no:
+                    chart_id_text = f"病歷號：{chart_no}   {patient_id}"
                 else:
-                    zpl_content += f"^FO30,{y_pos}^A0N,22,22^FDID: {patient_id}^FS\n"
+                    chart_id_text = f"病歷號：   {patient_id}"
+                # 生成整行文字的圖形
+                item_name = f"ITEM_CHART_ID_DYN_{hash(chart_id_text) % 10000}"
+                chart_id_graphic = self._text_to_zpl_graphic(chart_id_text, item_name)
+                if chart_id_graphic:
+                    zpl_content += chart_id_graphic + "\n"
+                    zpl_content += f"^FO30,{y_pos}^XG{item_name}^FS\n"
+                else:
+                    zpl_content += f"^FO30,{y_pos}^A0N,22,22^FD{chart_id_text}^FS\n"
             y_pos += 40
             
             # 姓名與生日
@@ -732,24 +810,43 @@ class PrintManager:
                     zpl_content += f"^FO200,{y_pos}^A0N,22,22^FDDOB: {dob}^FS\n"
             y_pos += 40
             
-            # 列印時間
+            # 列印時間（格式：YYYY/MM/DD   HH:MM）
+            time_parts = print_time.split(' ')
+            if len(time_parts) == 2:
+                date_part, time_part = time_parts
+                time_display = f"{date_part}   {time_part}"
+            else:
+                time_display = print_time
+            
+            # 生成新的時間顯示格式的圖形
+            if time_display != print_time:
+                item_name = f"ITEM_TIME_DYN_{hash(time_display) % 10000}"
+                time_graphic = self._text_to_zpl_graphic(time_display, item_name)
+                if time_graphic:
+                    zpl_content += time_graphic + "\n"
+                    dynamic_graphics['print_time_display'] = item_name
+            
             if "TIME" in self.zpl_fixed_graphics:
                 zpl_content += f"^FO30,{y_pos}^XGITEM_TIME^FS\n"
                 time_label_width = 80  # 「列印時間:」的寬度約80點
-                # 時間值往右移動一個中文字大小（約22點），避免重疊
+                # 時間值往右移動
                 time_value_x = 30 + time_label_width + 22
                 # 使用動態圖形顯示列印時間
-                if 'print_time' in dynamic_graphics:
+                if 'print_time_display' in dynamic_graphics:
+                    zpl_content += f"^FO{time_value_x},{y_pos}^XG{dynamic_graphics['print_time_display']}^FS\n"
+                elif 'print_time' in dynamic_graphics:
                     zpl_content += f"^FO{time_value_x},{y_pos}^XG{dynamic_graphics['print_time']}^FS\n"
                 else:
                     # 如果圖形生成失敗，使用備用方案（字型）
-                    zpl_content += f"^FO{time_value_x},{y_pos}^A0N,22,22^FD{print_time}^FS\n"
+                    zpl_content += f"^FO{time_value_x},{y_pos}^A0N,22,22^FD{time_display}^FS\n"
             else:
                 # 如果沒有固定圖形，使用動態圖形
-                if 'print_time' in dynamic_graphics:
+                if 'print_time_display' in dynamic_graphics:
+                    zpl_content += f"^FO30,{y_pos}^XG{dynamic_graphics['print_time_display']}^FS\n"
+                elif 'print_time' in dynamic_graphics:
                     zpl_content += f"^FO30,{y_pos}^XG{dynamic_graphics['print_time']}^FS\n"
                 else:
-                    zpl_content += f"^FO30,{y_pos}^A0N,22,22^FDTime: {print_time}^FS\n"
+                    zpl_content += f"^FO30,{y_pos}^A0N,22,22^FD列印時間: {time_display}^FS\n"
             y_pos += 40
             
             # 備註 (如果有)

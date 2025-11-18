@@ -8,14 +8,15 @@ from .card_reader import CardReader, CardReaderError
 from .data_processor import DataProcessor, DataProcessingError
 from .print_manager import PrintManager, PrintManagerError
 from .record_manager import RecordManager, RecordManagerError
+from .version import APP_TITLE, VERSION_LABEL
 
 class MedicalCardApp:
     def __init__(self, root, dll_path=None):
         self.root = root
-        self.root.title("健保卡資料讀取與標籤列印系統 v1.0")
-        self.root.geometry("650x750")  # 增加視窗高度以適應標籤機選擇功能
+        self.root.title(APP_TITLE)
+        self.root.geometry("650x800")  # 增加視窗高度以適應病歷號欄位和標籤機選擇功能
         self.root.resizable(True, True)  # 允許調整視窗大小
-        self.root.minsize(600, 700)  # 增加最小視窗高度
+        self.root.minsize(600, 750)  # 增加最小視窗高度以容納所有欄位
         
         # 設定全局字體為微軟正黑體
         self.default_font = "微軟正黑體"
@@ -179,22 +180,32 @@ class MedicalCardApp:
         patient_frame.pack(pady=10, padx=20, fill='x')
         
         # 建立資料顯示/輸入欄位
+        self.patient_chart_no_var = tk.StringVar()
         self.patient_id_var = tk.StringVar()
         self.patient_name_var = tk.StringVar()
         self.patient_dob_var = tk.StringVar()
         self.patient_note_var = tk.StringVar()
         self.card_no_var = tk.StringVar()
         
-        # ID
+        # 病歷號
+        chart_no_frame = ttk.Frame(patient_frame)
+        chart_no_frame.pack(fill='x', pady=2)
+        ttk.Label(chart_no_frame, text="病歷號:", width=12, anchor='w', 
+                 font=(self.default_font, 11, "bold")).pack(side='left')
+        self.chart_no_entry = ttk.Entry(chart_no_frame, textvariable=self.patient_chart_no_var, 
+                                       font=(self.default_font, 13), state='normal',
+                                       width=20)
+        self.chart_no_entry.pack(side='left', padx=5)
+        
+        # 身分證字號
         id_frame = ttk.Frame(patient_frame)
         id_frame.pack(fill='x', pady=2)
-        ttk.Label(id_frame, text="ID:", width=12, anchor='w', 
+        ttk.Label(id_frame, text="身分證字號:", width=12, anchor='w', 
                  font=(self.default_font, 11, "bold")).pack(side='left')
         self.id_entry = ttk.Entry(id_frame, textvariable=self.patient_id_var, 
                                 font=(self.default_font, 13), state='readonly',
                                 width=20)
         self.id_entry.pack(side='left', padx=5)
-        ttk.Label(id_frame, text="(身分證字號)", foreground="gray").pack(side='left', padx=5)
         
         # 姓名
         name_frame = ttk.Frame(patient_frame)
@@ -230,16 +241,16 @@ class MedicalCardApp:
         # 綁定備註欄位的字數限制
         self.patient_note_var.trace_add('write', self._on_note_change)
         
-        # 健保卡號(後四碼)
+        # 健保卡號
         card_no_frame = ttk.Frame(patient_frame)
         card_no_frame.pack(fill='x', pady=2)
-        ttk.Label(card_no_frame, text="健保卡號(後四碼):", width=12, anchor='w', 
+        ttk.Label(card_no_frame, text="健保卡號:", width=12, anchor='w', 
                  font=(self.default_font, 11, "bold")).pack(side='left')
         self.card_no_entry = ttk.Entry(card_no_frame, textvariable=self.card_no_var, 
                                      font=(self.default_font, 13), state='readonly',
                                      width=20)
         self.card_no_entry.pack(side='left', padx=5)
-        ttk.Label(card_no_frame, text="(讀卡模式有效)", foreground="gray").pack(side='left', padx=5)
+        ttk.Label(card_no_frame, text="(末四碼，讀卡模式有效)", foreground="gray").pack(side='left', padx=5)
         
         # 列印設定區
         print_frame = ttk.LabelFrame(main_tab, text="列印設定", padding=15)
@@ -297,6 +308,7 @@ class MedicalCardApp:
         clear_button.pack(side='left', padx=12, pady=8)
 
         # 綁定輸入欄位的變更事件
+        self.patient_chart_no_var.trace_add('write', self._on_data_change)
         self.patient_id_var.trace_add('write', self._on_data_change)
         self.patient_name_var.trace_add('write', self._on_data_change)
         self.patient_dob_var.trace_add('write', self._on_data_change)
@@ -310,7 +322,7 @@ class MedicalCardApp:
         self.create_stats_content()
         
         # 版本號標籤 - 放在主視窗右下方
-        version_label = ttk.Label(self.root, text="Ver_1_20251105", 
+        version_label = ttk.Label(self.root, text=VERSION_LABEL, 
                                  font=(self.default_font, 8, "underline"),
                                  foreground="gray")
         version_label.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
@@ -402,12 +414,13 @@ class MedicalCardApp:
             # 顯示完整記錄
             details_text.insert('end', "=== 完整記錄 ===\n")
             if records:
-                # 表頭 - 按照新的排序：序號、ID、姓名、生日、列印時間、備註
-                details_text.insert('end', f"{'序號':<4} {'ID':<12} {'姓名':<8} {'生日':<12} {'列印時間':<18} {'備註':<10}\n")
-                details_text.insert('end', "-" * 74 + "\n")
+                # 表頭 - 按照新的排序：序號、病歷號、身分證字號、姓名、生日、列印時間、備註
+                details_text.insert('end', f"{'序號':<4} {'病歷號':<10} {'身分證字號':<12} {'姓名':<8} {'生日':<12} {'列印時間':<18} {'備註':<10}\n")
+                details_text.insert('end', "-" * 84 + "\n")
                 
                 # 記錄內容
                 for i, record in enumerate(records, 1):
+                    chart_no_str = record.get('病歷號', '')[:8]
                     id_str = record.get('身分證字號', '')[:10]
                     name_str = record.get('姓名', '')[:6]
                     dob_str = record.get('出生年月日', '')[:10]
@@ -415,7 +428,7 @@ class MedicalCardApp:
                     note_str = record.get('備註', '')[:8]
                     
                     # 按照新的排序顯示
-                    details_text.insert('end', f"{i:<4} {id_str:<12} {name_str:<8} {dob_str:<12} {time_str:<18} {note_str:<10}\n")
+                    details_text.insert('end', f"{i:<4} {chart_no_str:<10} {id_str:<12} {name_str:<8} {dob_str:<12} {time_str:<18} {note_str:<10}\n")
             else:
                 details_text.insert('end', "今日尚無記錄\n")
                 
@@ -460,11 +473,16 @@ class MedicalCardApp:
             self.current_patient_data = processed_data
 
             # 更新 UI 顯示
+            self.patient_chart_no_var.set(processed_data.get("chart_no", ""))
             self.patient_id_var.set(processed_data["id"])
             self.patient_name_var.set(processed_data["name"])
             self.patient_dob_var.set(processed_data["dob"])
             self.patient_note_var.set("")  # 讀卡後備註欄位清空，供使用者輸入
             self.card_no_var.set(processed_data.get("card_no", ""))
+            
+            # 讀卡成功後，將姓名和生日欄位改為可編輯狀態（供核對和修改）
+            self.name_entry.configure(state='normal')
+            self.dob_entry.configure(state='normal')
             
             # 設定狀態訊息
             self.status_text.set("讀取成功-請核對病人姓名與生日")
@@ -649,6 +667,7 @@ class MedicalCardApp:
             if id_value and name_value and dob_value:
                 # 更新當前病人資料
                 self.current_patient_data = {
+                    "chart_no": self.patient_chart_no_var.get().strip(),
                     "id": id_value,
                     "name": name_value,
                     "dob": dob_value,
@@ -659,6 +678,11 @@ class MedicalCardApp:
                 self.print_button.config(state=tk.NORMAL)
             else:
                 self.print_button.config(state=tk.DISABLED)
+        else:
+            # 讀卡模式下，當資料變更時也要更新 current_patient_data
+            if self.current_patient_data:
+                self.current_patient_data["chart_no"] = self.patient_chart_no_var.get().strip()
+                self.current_patient_data["note"] = self.patient_note_var.get().strip()
 
     def print_labels(self):
         """列印標籤"""
@@ -674,9 +698,10 @@ class MedicalCardApp:
                 messagebox.showwarning("列印錯誤", "請先讀取健保卡資料")
                 return
 
-            # 準備列印資料，包含當前的備註內容
+            # 準備列印資料，包含當前的備註和病歷號內容
             print_data = self.current_patient_data.copy()
             print_data["note"] = self.patient_note_var.get().strip()
+            print_data["chart_no"] = self.patient_chart_no_var.get().strip()
 
             # 取得選擇的標籤機模式
             printer_mode = self.printer_mode_var.get()
@@ -766,7 +791,11 @@ class MedicalCardApp:
 
     def _set_entry_state(self, state):
         """設定所有輸入框的狀態"""
+        # 病歷號在所有模式下都可以編輯
+        self.chart_no_entry.configure(state='normal')
+        # 身分證字號：讀卡模式唯讀，手工模式可編輯
         self.id_entry.configure(state=state)
+        # 姓名和生日：讀卡模式初始唯讀，讀取後可編輯；手工模式可編輯
         self.name_entry.configure(state=state)
         self.dob_entry.configure(state=state)
         # 備註欄位在兩種模式下都可以輸入
@@ -777,6 +806,7 @@ class MedicalCardApp:
     def _clear_data_without_confirm(self):
         """直接清除病人資料，不顯示確認對話框"""
         self.current_patient_data = None
+        self.patient_chart_no_var.set("")
         self.patient_id_var.set("")
         self.patient_name_var.set("")
         self.patient_dob_var.set("")
@@ -989,12 +1019,13 @@ class MedicalCardApp:
                 writer = csv.writer(f)
                 
                 # 寫入標題列
-                headers = ["ID", "姓名", "生日", "列印時間", "備註", "健保卡號", "操作類型", "列印張數"]
+                headers = ["病歷號", "身分證字號", "姓名", "生日", "列印時間", "備註", "健保卡號", "操作類型", "列印張數"]
                 writer.writerow(headers)
                 
                 # 寫入資料列
                 for record in records:
                     row = [
+                        record.get('病歷號', ''),
                         record.get('身分證字號', ''),
                         record.get('姓名', ''),
                         record.get('出生年月日', ''),
@@ -1363,25 +1394,30 @@ class MedicalCardApp:
         input_frame = ttk.Frame(main_frame)
         input_frame.pack(fill='x', pady=10)
         
-        # ID
-        ttk.Label(input_frame, text="ID:", width=12, anchor='w').grid(row=0, column=0, sticky='w', pady=5)
+        # 病歷號
+        ttk.Label(input_frame, text="病歷號:", width=12, anchor='w').grid(row=0, column=0, sticky='w', pady=5)
+        chart_no_var = tk.StringVar()
+        chart_no_entry = ttk.Entry(input_frame, textvariable=chart_no_var, width=20)
+        chart_no_entry.grid(row=0, column=1, sticky='ew', pady=5, padx=5)
+        
+        # 身分證字號
+        ttk.Label(input_frame, text="身分證字號:", width=12, anchor='w').grid(row=1, column=0, sticky='w', pady=5)
         id_var = tk.StringVar()
         id_entry = ttk.Entry(input_frame, textvariable=id_var, width=20)
-        id_entry.grid(row=0, column=1, sticky='ew', pady=5, padx=5)
-        ttk.Label(input_frame, text="(身分證字號)", foreground="gray").grid(row=0, column=2, sticky='w', pady=5, padx=5)
+        id_entry.grid(row=1, column=1, sticky='ew', pady=5, padx=5)
         
         # 姓名
-        ttk.Label(input_frame, text="姓名:", width=12, anchor='w').grid(row=1, column=0, sticky='w', pady=5)
+        ttk.Label(input_frame, text="姓名:", width=12, anchor='w').grid(row=2, column=0, sticky='w', pady=5)
         name_var = tk.StringVar()
         name_entry = ttk.Entry(input_frame, textvariable=name_var, width=20)
-        name_entry.grid(row=1, column=1, sticky='ew', pady=5, padx=5)
+        name_entry.grid(row=2, column=1, sticky='ew', pady=5, padx=5)
         
         # 生日
-        ttk.Label(input_frame, text="生日:", width=12, anchor='w').grid(row=2, column=0, sticky='w', pady=5)
+        ttk.Label(input_frame, text="生日:", width=12, anchor='w').grid(row=3, column=0, sticky='w', pady=5)
         dob_var = tk.StringVar()
         dob_entry = ttk.Entry(input_frame, textvariable=dob_var, width=20)
-        dob_entry.grid(row=2, column=1, sticky='ew', pady=5, padx=5)
-        ttk.Label(input_frame, text="(民國年YYY/MM/DD)", foreground="gray").grid(row=2, column=2, sticky='w', pady=5, padx=5)
+        dob_entry.grid(row=3, column=1, sticky='ew', pady=5, padx=5)
+        ttk.Label(input_frame, text="(民國年YYY/MM/DD)", foreground="gray").grid(row=3, column=2, sticky='w', pady=5, padx=5)
         
         # 設定欄位權重
         input_frame.columnconfigure(1, weight=1)
@@ -1393,7 +1429,7 @@ class MedicalCardApp:
         def confirm_input():
             # 驗證輸入
             if not id_var.get().strip():
-                messagebox.showerror("輸入錯誤", "請輸入ID")
+                messagebox.showerror("輸入錯誤", "請輸入身分證字號")
                 return
             if not name_var.get().strip():
                 messagebox.showerror("輸入錯誤", "請輸入姓名")
@@ -1417,9 +1453,12 @@ class MedicalCardApp:
                 # 處理資料
                 processor = DataProcessor()
                 processed_data = processor.process_raw_data(raw_data)
+                # 加入病歷號
+                processed_data["chart_no"] = chart_no_var.get().strip()
                 self.current_patient_data = processed_data
                 
                 # 更新 UI 顯示
+                self.patient_chart_no_var.set(processed_data.get("chart_no", ""))
                 self.patient_id_var.set(processed_data["id"])
                 self.patient_name_var.set(processed_data["name"])
                 self.patient_dob_var.set(processed_data["dob"])
@@ -1468,12 +1507,13 @@ class MedicalCardApp:
         cancel_button.pack(side='left', padx=10)
         
         # 焦點設定
-        id_entry.focus()
+        chart_no_entry.focus()
         
         # 綁定 Enter 鍵
         def on_enter(event):
             confirm_input()
         
+        chart_no_entry.bind('<Return>', on_enter)
         id_entry.bind('<Return>', on_enter)
         name_entry.bind('<Return>', on_enter)
         dob_entry.bind('<Return>', on_enter)

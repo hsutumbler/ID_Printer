@@ -79,6 +79,7 @@ class DataProcessor:
                 card_no_last4 = ""
 
             processed_data = {
+                "chart_no": "",  # 病歷號（從健保卡讀不到，需手動輸入）
                 "id": patient_id,
                 "name": patient_name,
                 "dob": patient_dob,

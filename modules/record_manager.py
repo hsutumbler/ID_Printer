@@ -28,10 +28,10 @@ class RecordManager:
     def log_operation(self, patient_data, operation_time, print_count=0, operation_type="讀取"):
         """
         記錄操作，包括病人資料、時間和列印張數。
-        patient_data 應包含 'id', 'name', 'dob', 'note', 'card_no'。
+        patient_data 應包含 'chart_no', 'id', 'name', 'dob', 'note', 'card_no'。
         """
         filepath = self._get_record_filepath()
-        header = ["時間戳記", "身分證字號", "姓名", "出生年月日", "列印張數", "操作類型", "備註", "健保卡號"]
+        header = ["時間戳記", "病歷號", "身分證字號", "姓名", "出生年月日", "列印張數", "操作類型", "備註", "健保卡號"]
         
         try:
             # 檢查檔案是否存在且有內容
@@ -49,6 +49,7 @@ class RecordManager:
                 # 寫入記錄
                 row = [
                     operation_time,
+                    patient_data.get("chart_no", ""),  # 病歷號
                     patient_data.get("id", "N/A"),
                     patient_data.get("name", "N/A"),
                     patient_data.get("dob", "N/A"),

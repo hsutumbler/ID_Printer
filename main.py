@@ -5,7 +5,7 @@
 檢驗科抽血櫃台專用
 
 作者: AI Assistant
-版本: 1.0
+版本: 從 modules.version 模組讀取
 日期: 2025/10/08
 """
 
@@ -48,6 +48,7 @@ else:
 try:
     from modules.ui import create_app
     from modules.logger import logger
+    from modules.version import VERSION
 except ImportError as e:
     print(f"模組匯入失敗: {e}")
     print("請確認所有必要的模組檔案都存在")
