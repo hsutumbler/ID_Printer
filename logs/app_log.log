@@ -104,3 +104,298 @@
 2025-11-17 18:07:54,794 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
 2025-11-17 18:07:58,383 - MedicalCardApp - INFO - 使用者關閉程式
 2025-11-17 18:07:58,444 - MedicalCardApp - INFO - 應用程式正常結束
+2025-11-18 22:29:35,360 - MedicalCardApp - INFO - ReportLab 載入成功，已修正相容性問題
+2025-11-18 22:29:35,387 - MedicalCardApp - WARNING - 部分條碼子模組匯入失敗（可能不影響功能）: No module named 'barcode.code128'
+2025-11-18 22:29:35,388 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:29:35,388 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-11-18 22:29:35,389 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:29:35,389 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-11-18 22:29:35,391 - MedicalCardApp - INFO - 從配置檔案讀取 DLL 路徑: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:29:35,428 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-11-18 22:29:35,430 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-11-18 22:29:35,430 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-11-18 22:29:35,430 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-11-18 22:29:35,431 - MedicalCardApp - INFO - COM埠自動偵測: 停用
+2025-11-18 22:29:35,431 - MedicalCardApp - INFO - 使用COM埠: COM3
+2025-11-18 22:29:35,436 - MedicalCardApp - INFO - 使用標準健保署 DLL 函式簽名，載入: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:29:35,436 - MedicalCardApp - INFO - 已設定 hisGetBasicData 函式簽名（參考程式的方法）
+2025-11-18 22:29:35,436 - MedicalCardApp - INFO - 健保卡 DLL 載入成功: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:29:35,436 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (使用 DLL: C:\NHI\LIB\CsHis50.dll)
+2025-11-18 22:29:35,436 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-11-18 22:29:35,532 - MedicalCardApp - INFO - 成功註冊字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:29:35,533 - MedicalCardApp - INFO - ZPL 圖形模式使用字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:29:35,542 - MedicalCardApp - INFO - 成功生成 6 個固定圖形
+2025-11-18 22:29:35,542 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-11-18 22:29:35,543 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: e:\Project\ID_Printer\ID_Printer\records
+2025-11-18 22:29:35,543 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-11-18 22:29:35,576 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:29:35,576 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:29:35,577 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:29:35,577 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:29:35,577 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:29:35,580 - MedicalCardApp - INFO - 統計頁面已更新，共 2 筆記錄
+2025-11-18 22:29:35,581 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:29:35,581 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:29:35,581 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-11-18 22:29:38,783 - MedicalCardApp - INFO - 切換到統計頁面，重新載入資料
+2025-11-18 22:29:38,784 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:29:38,784 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:29:38,785 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:29:38,785 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:29:38,785 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:29:38,787 - MedicalCardApp - INFO - 統計頁面已更新，共 2 筆記錄
+2025-11-18 22:40:24,057 - MedicalCardApp - INFO - 使用者關閉程式
+2025-11-18 22:40:24,078 - MedicalCardApp - INFO - 應用程式正常結束
+2025-11-18 22:43:32,405 - MedicalCardApp - INFO - ReportLab 載入成功，已修正相容性問題
+2025-11-18 22:43:32,429 - MedicalCardApp - WARNING - 部分條碼子模組匯入失敗（可能不影響功能）: No module named 'barcode.code128'
+2025-11-18 22:43:32,430 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:43:32,430 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-11-18 22:43:32,431 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:43:32,431 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-11-18 22:43:32,431 - MedicalCardApp - INFO - 從配置檔案讀取 DLL 路徑: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:43:32,465 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-11-18 22:43:32,465 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-11-18 22:43:32,466 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-11-18 22:43:32,466 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-11-18 22:43:32,466 - MedicalCardApp - INFO - COM埠自動偵測: 停用
+2025-11-18 22:43:32,467 - MedicalCardApp - INFO - 使用COM埠: COM3
+2025-11-18 22:43:32,473 - MedicalCardApp - INFO - 使用標準健保署 DLL 函式簽名，載入: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:43:32,474 - MedicalCardApp - INFO - 已設定 hisGetBasicData 函式簽名（參考程式的方法）
+2025-11-18 22:43:32,474 - MedicalCardApp - INFO - 健保卡 DLL 載入成功: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:43:32,474 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (使用 DLL: C:\NHI\LIB\CsHis50.dll)
+2025-11-18 22:43:32,475 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-11-18 22:43:32,555 - MedicalCardApp - INFO - 成功註冊字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:43:32,555 - MedicalCardApp - INFO - ZPL 圖形模式使用字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:43:32,562 - MedicalCardApp - INFO - 成功生成 6 個固定圖形
+2025-11-18 22:43:32,562 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-11-18 22:43:32,562 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: e:\Project\ID_Printer\ID_Printer\records
+2025-11-18 22:43:32,562 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-11-18 22:43:32,589 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:32,589 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:43:32,589 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:32,589 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:43:32,590 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:32,591 - MedicalCardApp - INFO - 統計頁面已更新，共 2 筆記錄
+2025-11-18 22:43:32,592 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:32,592 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:43:32,592 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-11-18 22:43:35,209 - MedicalCardApp - INFO - 切換到統計頁面，重新載入資料
+2025-11-18 22:43:35,210 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:35,210 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:43:35,212 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:35,212 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:43:35,212 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:35,214 - MedicalCardApp - INFO - 統計頁面已更新，共 2 筆記錄
+2025-11-18 22:43:57,402 - MedicalCardApp - INFO - 使用者關閉程式
+2025-11-18 22:43:57,421 - MedicalCardApp - INFO - 應用程式正常結束
+2025-11-18 22:43:59,753 - MedicalCardApp - INFO - ReportLab 載入成功，已修正相容性問題
+2025-11-18 22:43:59,774 - MedicalCardApp - WARNING - 部分條碼子模組匯入失敗（可能不影響功能）: No module named 'barcode.code128'
+2025-11-18 22:43:59,776 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:43:59,776 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-11-18 22:43:59,776 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:43:59,776 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-11-18 22:43:59,777 - MedicalCardApp - INFO - 從配置檔案讀取 DLL 路徑: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:43:59,813 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-11-18 22:43:59,813 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-11-18 22:43:59,814 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-11-18 22:43:59,814 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-11-18 22:43:59,814 - MedicalCardApp - INFO - COM埠自動偵測: 停用
+2025-11-18 22:43:59,815 - MedicalCardApp - INFO - 使用COM埠: COM3
+2025-11-18 22:43:59,819 - MedicalCardApp - INFO - 使用標準健保署 DLL 函式簽名，載入: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:43:59,820 - MedicalCardApp - INFO - 已設定 hisGetBasicData 函式簽名（參考程式的方法）
+2025-11-18 22:43:59,820 - MedicalCardApp - INFO - 健保卡 DLL 載入成功: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:43:59,820 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (使用 DLL: C:\NHI\LIB\CsHis50.dll)
+2025-11-18 22:43:59,820 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-11-18 22:43:59,898 - MedicalCardApp - INFO - 成功註冊字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:43:59,899 - MedicalCardApp - INFO - ZPL 圖形模式使用字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:43:59,907 - MedicalCardApp - INFO - 成功生成 6 個固定圖形
+2025-11-18 22:43:59,907 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-11-18 22:43:59,908 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: e:\Project\ID_Printer\ID_Printer\records
+2025-11-18 22:43:59,908 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-11-18 22:43:59,930 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:59,930 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:43:59,930 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:59,931 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:43:59,931 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:59,933 - MedicalCardApp - INFO - 統計頁面已更新，共 2 筆記錄
+2025-11-18 22:43:59,934 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:43:59,935 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:43:59,935 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-11-18 22:44:01,723 - MedicalCardApp - INFO - 切換到統計頁面，重新載入資料
+2025-11-18 22:44:01,724 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:44:01,724 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:44:01,726 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:44:01,726 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:44:01,726 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:44:01,728 - MedicalCardApp - INFO - 統計頁面已更新，共 2 筆記錄
+2025-11-18 22:50:32,698 - MedicalCardApp - INFO - 使用者關閉程式
+2025-11-18 22:50:32,715 - MedicalCardApp - INFO - 應用程式正常結束
+2025-11-18 22:50:39,824 - MedicalCardApp - INFO - ReportLab 載入成功，已修正相容性問題
+2025-11-18 22:50:39,850 - MedicalCardApp - WARNING - 部分條碼子模組匯入失敗（可能不影響功能）: No module named 'barcode.code128'
+2025-11-18 22:50:39,852 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:50:39,852 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-11-18 22:50:39,852 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:50:39,852 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-11-18 22:50:39,854 - MedicalCardApp - INFO - 從配置檔案讀取 DLL 路徑: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:50:39,916 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-11-18 22:50:39,916 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-11-18 22:50:39,917 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-11-18 22:50:39,917 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-11-18 22:50:39,917 - MedicalCardApp - INFO - COM埠自動偵測: 停用
+2025-11-18 22:50:39,918 - MedicalCardApp - INFO - 使用COM埠: COM3
+2025-11-18 22:50:39,926 - MedicalCardApp - INFO - 使用標準健保署 DLL 函式簽名，載入: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:50:39,927 - MedicalCardApp - INFO - 已設定 hisGetBasicData 函式簽名（參考程式的方法）
+2025-11-18 22:50:39,928 - MedicalCardApp - INFO - 健保卡 DLL 載入成功: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:50:39,928 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (使用 DLL: C:\NHI\LIB\CsHis50.dll)
+2025-11-18 22:50:39,928 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-11-18 22:50:40,032 - MedicalCardApp - INFO - 成功註冊字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:50:40,034 - MedicalCardApp - INFO - ZPL 圖形模式使用字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:50:40,042 - MedicalCardApp - INFO - 成功生成 6 個固定圖形
+2025-11-18 22:50:40,042 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-11-18 22:50:40,042 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: e:\Project\ID_Printer\ID_Printer\records
+2025-11-18 22:50:40,042 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-11-18 22:50:40,071 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:50:40,071 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:50:40,072 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:50:40,072 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:50:40,072 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:50:40,074 - MedicalCardApp - INFO - 統計頁面已更新，共 2 筆記錄
+2025-11-18 22:50:40,075 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:50:40,076 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:50:40,076 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-11-18 22:50:41,879 - MedicalCardApp - INFO - 切換到統計頁面，重新載入資料
+2025-11-18 22:50:41,880 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:50:41,880 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:50:41,882 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:50:41,882 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:50:41,882 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:50:41,884 - MedicalCardApp - INFO - 統計頁面已更新，共 2 筆記錄
+2025-11-18 22:50:45,692 - MedicalCardApp - INFO - 切換到統計頁面，重新載入資料
+2025-11-18 22:50:45,693 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:50:45,693 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:50:45,694 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:50:45,694 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:50:45,695 - MedicalCardApp - INFO - 讀取今日記錄: 2 筆
+2025-11-18 22:50:45,696 - MedicalCardApp - INFO - 統計頁面已更新，共 2 筆記錄
+2025-11-18 22:51:07,275 - MedicalCardApp - INFO - 開始列印標籤，病人: 許欽豪, 張數: 1, 模式: pdf
+2025-11-18 22:51:07,277 - MedicalCardApp - INFO - 開始生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmpk0d4drnd.pdf
+2025-11-18 22:51:07,278 - MedicalCardApp - INFO - 開始生成條碼: barcode_value=6109, BARCODE_AVAILABLE=True, use_barcode=True
+2025-11-18 22:51:07,296 - MedicalCardApp - INFO - 插入條碼: 位置=(5.669291338582678, 65.19685039370079), 尺寸=(130.39370078740157, 28.34645669291339), 圖片尺寸=(194, 280)
+2025-11-18 22:51:07,300 - MedicalCardApp - INFO - 條碼圖片已成功插入 PDF（使用內存圖片，避免臨時檔案問題）
+2025-11-18 22:51:07,314 - MedicalCardApp - INFO - 生成 PDF 標籤: C:\Users\hsutu\AppData\Local\Temp\tmpk0d4drnd.pdf (50.0x35.0mm)
+2025-11-18 22:51:07,315 - MedicalCardApp - INFO - PDF 標籤生成成功: C:\Users\hsutu\AppData\Local\Temp\tmpk0d4drnd.pdf
+2025-11-18 22:51:07,342 - MedicalCardApp - INFO - 直接列印到標籤機: C:\Users\hsutu\AppData\Local\Temp\tmpk0d4drnd.pdf
+2025-11-18 22:51:07,396 - MedicalCardApp - INFO - 已發送檔案到印表機: C:\Users\hsutu\AppData\Local\Temp\tmpk0d4drnd.pdf, 顯示對話框: True
+2025-11-18 22:51:07,396 - MedicalCardApp - INFO - 成功透過 PDF 列印 1 張標籤
+2025-11-18 22:51:09,404 - MedicalCardApp - WARNING - 清理臨時檔案失敗 C:\Users\hsutu\AppData\Local\Temp\tmpk0d4drnd.pdf: [WinError 32] 程序無法存取檔案，因為檔案正由另一個程序使用。: 'C:\\Users\\hsutu\\AppData\\Local\\Temp\\tmpk0d4drnd.pdf'
+2025-11-18 22:51:09,405 - MedicalCardApp - INFO - 記錄成功: 補列印 - 許欽豪 - 1 張
+2025-11-18 22:51:13,396 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:51:13,396 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:51:13,397 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:51:13,397 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:51:13,399 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:51:13,399 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:51:13,399 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:51:13,401 - MedicalCardApp - INFO - 統計頁面已更新，共 3 筆記錄
+2025-11-18 22:51:38,068 - MedicalCardApp - INFO - 切換到統計頁面，重新載入資料
+2025-11-18 22:51:38,068 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:51:38,068 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:51:38,069 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:51:38,070 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:51:38,070 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:51:38,071 - MedicalCardApp - INFO - 統計頁面已更新，共 3 筆記錄
+2025-11-18 22:51:49,731 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:51:56,318 - MedicalCardApp - INFO - 使用者匯出完整資料: C:/Users/hsutu/Desktop/健保卡標籤完整資料_20251118.csv, 共 3 筆記錄
+2025-11-18 22:54:05,036 - MedicalCardApp - INFO - 使用者關閉程式
+2025-11-18 22:54:05,058 - MedicalCardApp - INFO - 應用程式正常結束
+2025-11-18 22:54:07,629 - MedicalCardApp - INFO - ReportLab 載入成功，已修正相容性問題
+2025-11-18 22:54:07,657 - MedicalCardApp - WARNING - 部分條碼子模組匯入失敗（可能不影響功能）: No module named 'barcode.code128'
+2025-11-18 22:54:07,660 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:54:07,660 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-11-18 22:54:07,660 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:54:07,660 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-11-18 22:54:07,661 - MedicalCardApp - INFO - 從配置檔案讀取 DLL 路徑: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:54:07,703 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-11-18 22:54:07,703 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-11-18 22:54:07,705 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-11-18 22:54:07,705 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-11-18 22:54:07,705 - MedicalCardApp - INFO - COM埠自動偵測: 停用
+2025-11-18 22:54:07,705 - MedicalCardApp - INFO - 使用COM埠: COM3
+2025-11-18 22:54:07,711 - MedicalCardApp - INFO - 使用標準健保署 DLL 函式簽名，載入: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:54:07,711 - MedicalCardApp - INFO - 已設定 hisGetBasicData 函式簽名（參考程式的方法）
+2025-11-18 22:54:07,711 - MedicalCardApp - INFO - 健保卡 DLL 載入成功: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:54:07,711 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (使用 DLL: C:\NHI\LIB\CsHis50.dll)
+2025-11-18 22:54:07,711 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-11-18 22:54:07,798 - MedicalCardApp - INFO - 成功註冊字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:54:07,799 - MedicalCardApp - INFO - ZPL 圖形模式使用字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:54:07,807 - MedicalCardApp - INFO - 成功生成 6 個固定圖形
+2025-11-18 22:54:07,807 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-11-18 22:54:07,807 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: e:\Project\ID_Printer\ID_Printer\records
+2025-11-18 22:54:07,807 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-11-18 22:54:08,093 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:54:08,093 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:54:08,125 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:54:08,126 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:54:08,126 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:54:08,127 - MedicalCardApp - INFO - 統計頁面已更新，共 3 筆記錄
+2025-11-18 22:54:08,129 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:54:08,129 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:54:08,129 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-11-18 22:54:09,718 - MedicalCardApp - INFO - 切換到統計頁面，重新載入資料
+2025-11-18 22:54:09,719 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:54:09,719 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:54:09,721 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:54:09,721 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:54:09,721 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:54:09,722 - MedicalCardApp - INFO - 統計頁面已更新，共 3 筆記錄
+2025-11-18 22:54:13,401 - MedicalCardApp - INFO - 使用者關閉程式
+2025-11-18 22:54:13,423 - MedicalCardApp - INFO - 應用程式正常結束
+2025-11-18 22:58:07,232 - MedicalCardApp - INFO - ReportLab 載入成功，已修正相容性問題
+2025-11-18 22:58:07,259 - MedicalCardApp - WARNING - 部分條碼子模組匯入失敗（可能不影響功能）: No module named 'barcode.code128'
+2025-11-18 22:58:07,261 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:58:07,261 - MedicalCardApp - INFO - 健保卡資料讀取與標籤列印系統啟動
+2025-11-18 22:58:07,262 - MedicalCardApp - INFO - ==================================================
+2025-11-18 22:58:07,262 - MedicalCardApp - INFO - ReportLab 已安裝，將使用 PDF 列印
+2025-11-18 22:58:07,262 - MedicalCardApp - INFO - 從配置檔案讀取 DLL 路徑: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:58:07,297 - MedicalCardApp - INFO - 設定全局字體為: 微軟正黑體
+2025-11-18 22:58:07,297 - MedicalCardApp - INFO - 使用者介面初始化完成
+2025-11-18 22:58:07,298 - MedicalCardApp - INFO - 健保卡讀卡機控制軟體路徑: C:\NHI\BIN\csfsim.exe
+2025-11-18 22:58:07,298 - MedicalCardApp - INFO - 離線模式: 啟用
+2025-11-18 22:58:07,298 - MedicalCardApp - INFO - COM埠自動偵測: 停用
+2025-11-18 22:58:07,298 - MedicalCardApp - INFO - 使用COM埠: COM3
+2025-11-18 22:58:07,305 - MedicalCardApp - INFO - 使用標準健保署 DLL 函式簽名，載入: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:58:07,306 - MedicalCardApp - INFO - 已設定 hisGetBasicData 函式簽名（參考程式的方法）
+2025-11-18 22:58:07,306 - MedicalCardApp - INFO - 健保卡 DLL 載入成功: C:\NHI\LIB\CsHis50.dll
+2025-11-18 22:58:07,306 - MedicalCardApp - INFO - 健保卡讀取模組初始化完成 (使用 DLL: C:\NHI\LIB\CsHis50.dll)
+2025-11-18 22:58:07,306 - MedicalCardApp - INFO - 資料處理模組初始化完成
+2025-11-18 22:58:07,386 - MedicalCardApp - INFO - 成功註冊字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:58:07,386 - MedicalCardApp - INFO - ZPL 圖形模式使用字型: C:/Windows/Fonts/msjh.ttc (微軟正黑體)
+2025-11-18 22:58:07,397 - MedicalCardApp - INFO - 成功生成 6 個固定圖形
+2025-11-18 22:58:07,397 - MedicalCardApp - INFO - 列印管理模組初始化完成 - 標籤尺寸: 50.0x35.0mm, 列印模式: pdf
+2025-11-18 22:58:07,397 - MedicalCardApp - INFO - 記錄檔管理模組初始化完成，記錄目錄: e:\Project\ID_Printer\ID_Printer\records
+2025-11-18 22:58:07,398 - MedicalCardApp - INFO - 所有模組初始化完成
+2025-11-18 22:58:07,424 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:58:07,424 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:58:07,424 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:58:07,424 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:58:07,424 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:58:07,427 - MedicalCardApp - INFO - 統計頁面已更新，共 3 筆記錄
+2025-11-18 22:58:07,427 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:58:07,428 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:58:07,428 - MedicalCardApp - INFO - 應用程式介面已建立，開始執行主迴圈
+2025-11-18 22:58:08,871 - MedicalCardApp - INFO - 切換到統計頁面，重新載入資料
+2025-11-18 22:58:08,872 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:58:08,872 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:58:08,872 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:58:08,872 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 22:58:08,874 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 22:58:08,874 - MedicalCardApp - INFO - 統計頁面已更新，共 3 筆記錄
+2025-11-18 23:00:37,020 - MedicalCardApp - INFO - 切換到統計頁面，重新載入資料
+2025-11-18 23:00:37,021 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 23:00:37,021 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 23:00:37,022 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 23:00:37,022 - MedicalCardApp - INFO - 今日統計: 讀取 0 次, 列印 2 次, 共 2 張標籤
+2025-11-18 23:00:37,022 - MedicalCardApp - INFO - 讀取今日記錄: 3 筆
+2025-11-18 23:00:37,025 - MedicalCardApp - INFO - 統計頁面已更新，共 3 筆記錄
+2025-11-18 23:01:10,338 - MedicalCardApp - INFO - 使用者關閉程式
+2025-11-18 23:01:10,368 - MedicalCardApp - INFO - 應用程式正常結束

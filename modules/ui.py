@@ -46,6 +46,8 @@ class MedicalCardApp:
         
         # 病人資料
         self.current_patient_data = None
+        self.records_tree = None
+        self.records_data = {}
         
         # 初始化讀取時間變數
         self.read_time_var = tk.StringVar()
@@ -373,13 +375,22 @@ class MedicalCardApp:
         stats_button_frame = ttk.Frame(self.stats_main_frame)
         stats_button_frame.pack(pady=15, fill='x')
         
+        # 建立內部框架來包裝按鈕（用於居中）
+        button_inner_frame = ttk.Frame(stats_button_frame)
+        button_inner_frame.pack(anchor='center', pady=10)
+        
+        # 補列印標籤按鈕
+        reprint_button = ttk.Button(button_inner_frame, text="補列印標籤", 
+                                   command=self.reprint_selected_labels, width=20)
+        reprint_button.pack(side='left', padx=10)
+        
         # 匯出完整資料按鈕
         def export_complete_data():
             self.export_today_complete_data()
             
-        export_button = ttk.Button(stats_button_frame, text="匯出完整資料", 
+        export_button = ttk.Button(button_inner_frame, text="匯出完整資料", 
                                   command=export_complete_data, width=20)
-        export_button.pack(anchor='center', pady=10)
+        export_button.pack(side='left', padx=10)
         
         self.stats_content_created = True
         
@@ -400,45 +411,53 @@ class MedicalCardApp:
             stats = self.record_manager.get_statistics()
             records = self.record_manager.get_today_records()
             
-            # 建立表格式顯示
-            details_text = tk.Text(self.details_frame, wrap='word', height=15, width=80, 
-                                 font=(self.default_font, 9))
+            # 建立表格式顯示（使用 Treeview）
+            tree_frame = ttk.Frame(self.details_frame)
+            tree_frame.pack(fill='both', expand=True)
             
-            # 顯示統計摘要
-            details_text.insert('1.0', "=== 今日統計摘要 ===\n")
-            details_text.insert('end', f"讀取次數: {stats['total_reads']} 次\n")
-            details_text.insert('end', f"列印次數: {stats['total_prints']} 次\n")
-            details_text.insert('end', f"列印標籤: {stats['total_labels']} 張\n")
-            details_text.insert('end', f"總記錄數: {stats['total_records']} 筆\n\n")
+            columns = ('序號', '病歷號', '身分證字號', '姓名', '生日', '列印時間', '備註', '列印張數')
+            self.records_tree = ttk.Treeview(tree_frame, columns=columns, show='headings', 
+                                             selectmode='extended', height=15)
             
-            # 顯示完整記錄
-            details_text.insert('end', "=== 完整記錄 ===\n")
-            if records:
-                # 表頭 - 按照新的排序：序號、病歷號、身分證字號、姓名、生日、列印時間、備註
-                details_text.insert('end', f"{'序號':<4} {'病歷號':<10} {'身分證字號':<12} {'姓名':<8} {'生日':<12} {'列印時間':<18} {'備註':<10}\n")
-                details_text.insert('end', "-" * 84 + "\n")
-                
-                # 記錄內容
-                for i, record in enumerate(records, 1):
-                    chart_no_str = record.get('病歷號', '')[:8]
-                    id_str = record.get('身分證字號', '')[:10]
-                    name_str = record.get('姓名', '')[:6]
-                    dob_str = record.get('出生年月日', '')[:10]
-                    time_str = record.get('時間戳記', '')[:16]  # 顯示到分鐘
-                    note_str = record.get('備註', '')[:8]
-                    
-                    # 按照新的排序顯示
-                    details_text.insert('end', f"{i:<4} {chart_no_str:<10} {id_str:<12} {name_str:<8} {dob_str:<12} {time_str:<18} {note_str:<10}\n")
+            for col in columns:
+                self.records_tree.heading(col, text=col)
+            
+            self.records_tree.column('序號', width=50, anchor='center')
+            self.records_tree.column('病歷號', width=80, anchor='center')
+            self.records_tree.column('身分證字號', width=110, anchor='center')
+            self.records_tree.column('姓名', width=80, anchor='center')
+            self.records_tree.column('生日', width=100, anchor='center')
+            self.records_tree.column('列印時間', width=150, anchor='center')
+            self.records_tree.column('備註', width=100, anchor='center')
+            self.records_tree.column('列印張數', width=80, anchor='center')
+            
+            # 顯示列印記錄於 Treeview
+            print_records = [r for r in records if r.get('操作類型') == '列印']
+            self.records_data = {}
+            
+            if print_records:
+                for i, record in enumerate(print_records, 1):
+                    values = (
+                        i,
+                        record.get('病歷號', '')[:10],
+                        record.get('身分證字號', '')[:12],
+                        record.get('姓名', '')[:8],
+                        record.get('出生年月日', '')[:12],
+                        record.get('時間戳記', '')[:19],
+                        record.get('備註', '')[:10],
+                        record.get('列印張數', '1')
+                    )
+                    item_id = self.records_tree.insert('', 'end', values=values)
+                    self.records_data[item_id] = record
             else:
-                details_text.insert('end', "今日尚無記錄\n")
-                
-            details_text.config(state='disabled')  # 設為唯讀
+                empty_id = self.records_tree.insert('', 'end', values=("—", "今日尚無列印記錄", "", "", "", "", "", ""))
+                self.records_data[empty_id] = None
             
             # 建立捲軸
-            scrollbar = ttk.Scrollbar(self.details_frame, orient='vertical', command=details_text.yview)
-            details_text.configure(yscrollcommand=scrollbar.set)
+            scrollbar = ttk.Scrollbar(tree_frame, orient='vertical', command=self.records_tree.yview)
+            self.records_tree.configure(yscrollcommand=scrollbar.set)
             
-            details_text.pack(side='left', fill='both', expand=True)
+            self.records_tree.pack(side='left', fill='both', expand=True)
             scrollbar.pack(side='right', fill='y')
             
             logger.info(f"統計頁面已更新，共 {len(records)} 筆記錄")
@@ -769,6 +788,77 @@ class MedicalCardApp:
             # 只在讀卡模式下啟用讀取按鈕
             if self.mode_var.get() == "card":
                 self.read_button.config(state=tk.NORMAL)
+
+    def reprint_selected_labels(self):
+        """補列印選中的記錄"""
+        try:
+            if not self.records_tree:
+                messagebox.showwarning("補列印", "尚未載入列印記錄")
+                return
+            
+            selected_items = self.records_tree.selection()
+            if not selected_items:
+                messagebox.showwarning("補列印", "請先選擇要補列印的記錄")
+                return
+            
+            print_count = self.print_count_var.get()
+            if not isinstance(print_count, int) or print_count <= 0 or print_count > 10:
+                messagebox.showwarning("列印錯誤", "列印張數必須為 1-10 之間的整數")
+                return
+            
+            printer_mode = self.printer_mode_var.get()
+            
+            if not messagebox.askyesno("確認補列印", f"確定要補列印選中的 {len(selected_items)} 筆記錄嗎？"):
+                return
+            
+            success_count = 0
+            fail_count = 0
+            
+            for item_id in selected_items:
+                record = self.records_data.get(item_id)
+                if not record:
+                    continue
+                
+                print_data = {
+                    "chart_no": record.get('病歷號', '').strip(),
+                    "id": record.get('身分證字號', '').strip(),
+                    "name": record.get('姓名', '').strip(),
+                    "dob": record.get('出生年月日', '').strip(),
+                    "note": record.get('備註', '').strip(),
+                    "card_no": record.get('健保卡號', '').strip(),
+                    "read_time": record.get('時間戳記', '')
+                }
+                
+                try:
+                    self.print_manager.print_labels(print_data, print_count, printer_mode)
+                    print_time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+                    try:
+                        self.record_manager.log_operation(
+                            print_data,
+                            print_time,
+                            print_count,
+                            "補列印"
+                        )
+                    except RecordManagerError as e:
+                        logger.warning(f"記錄補列印事件失敗: {e}")
+                    success_count += 1
+                except PrintManagerError as e:
+                    fail_count += 1
+                    logger.error(f"補列印失敗: {print_data.get('name', 'N/A')} - {e}")
+            
+            if success_count and not fail_count:
+                messagebox.showinfo("補列印完成", f"成功補列印 {success_count} 筆記錄")
+            elif success_count and fail_count:
+                messagebox.showwarning("部分補列印完成", f"成功 {success_count} 筆，失敗 {fail_count} 筆")
+            else:
+                messagebox.showerror("補列印失敗", "補列印全部失敗，請查看日誌")
+            
+            self.update_statistics()
+            self.refresh_stats_content()
+            
+        except Exception as e:
+            logger.error(f"補列印功能執行失敗: {e}")
+            messagebox.showerror("補列印錯誤", f"補列印功能執行失敗:\n{e}")
     
     def on_mode_change(self):
         """處理模式切換"""
